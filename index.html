@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TechTrust Application</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="app.css">
+
+</head>
+<body>
+    
+    <header class="bg-navy-blue text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <div class="text-2xl font-bold tracking-wider">TechTrust</div>
+            <nav class="space-x-6 hidden sm:flex">
+                <a href="#" id="nav-profile" class="font-medium hover:text-blue-300 transition-colors">Profile</a>
+                <a href="#" id="nav-jobs" class="font-medium hover:text-blue-300 transition-colors">Job Board</a>
+            </nav>
+            <button id="auth-btn" class="ml-4 bg-electric-blue text-navy-blue font-semibold px-4 py-1.5 rounded-full hover:bg-blue-300 transition-colors text-sm">
+                Sign In
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl mx-auto w-full p-4 sm:p-8 flex items-center justify-center" id="app-content-container">
+        
+        <div id="login-view" class="app-view w-full max-w-lg">
+            <div class="w-full bg-white p-8 rounded-lg shadow-xl border border-gray-200">
+                
+                <div class="flex border-b border-gray-200 mb-6">
+                    <button id="login-tab" class="auth-tab flex-1 py-2 text-lg font-semibold border-b-2 transition-colors active-tab text-navy-blue border-navy-blue">
+                        Log In
+                    </button>
+                    <button id="register-tab" class="auth-tab flex-1 py-2 text-lg font-semibold border-b-2 transition-colors text-gray-500 border-transparent">
+                        Register
+                    </button>
+                </div>
+
+                <div id="login-form-content" class="auth-content space-y-4">
+                    <h2 class="text-2xl font-bold text-gray-800">Welcome Back</h2>
+                    <p class="text-sm text-gray-500 mb-6">Access your verified profile or recruiter dashboard.</p>
+                    
+                    <div>
+                        <label for="login-email" class="block text-sm font-medium text-gray-700">Email Address</label>
+                        <input type="email" id="login-email" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-electric-blue focus:border-electric-blue">
+                    </div>
+                    
+                    <div>
+                        <label for="login-password" class="block text-sm font-medium text-gray-700">Password</label>
+                        <input type="password" id="login-password" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-electric-blue focus:border-electric-blue">
+                    </div>
+                    
+                    <button id="submit-login" class="w-full bg-navy-blue text-white py-2 rounded-md font-semibold hover:bg-indigo-900 transition-colors">
+                        Log In
+                    </button>
+                </div>
+
+                <div id="register-form-content" class="auth-content space-y-4 hidden">
+                    <h2 class="text-2xl font-bold text-gray-800">Create Account</h2>
+                    <p class="text-sm text-gray-500 mb-6">Join as a Professional or a Recruiter.</p>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Account Type</label>
+                        <div class="flex space-x-4">
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="user_type" value="professional" checked class="form-radio text-navy-blue focus:ring-electric-blue">
+                                <span class="ml-2 text-gray-700">Tech Professional</span>
+                            </label>
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="user_type" value="recruiter" class="form-radio text-navy-blue focus:ring-electric-blue">
+                                <span class="ml-2 text-gray-700">Recruiter</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="register-email" class="block text-sm font-medium text-gray-700">Email Address</label>
+                        <input type="email" id="register-email" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-electric-blue focus:border-electric-blue">
+                    </div>
+                    
+                    <div>
+                        <label for="register-password" class="block text-sm font-medium text-gray-700">Password</label>
+                        <input type="password" id="register-password" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-electric-blue focus:border-electric-blue">
+                    </div>
+                    
+                    <button id="submit-register" class="w-full bg-electric-blue text-navy-blue py-2 rounded-md font-semibold hover:bg-blue-300 transition-colors">
+                        Register Account
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+        <div id="profile-view" class="app-view w-full hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                
+                <div class="lg:col-span-1 space-y-6">
+                    
+                    <div class="bg-white p-6 rounded-lg shadow-xl border-t-4 border-[#69F0AE]">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">Verification Status</h3>
+                        <div class="text-center">
+                            <p class="text-6xl font-extrabold text-navy-blue">9.2</p>
+                            <p class="text-lg font-semibold text-[#69F0AE] mt-1">AI Trust Score</p>
+                            <p class="text-sm text-gray-500 mt-2">Last Vetted: 2025-10-21</p>
+                        </div>
+                        <button id="run-verification-btn" class="mt-6 w-full bg-electric-blue text-navy-blue py-2 rounded-md font-semibold hover:bg-blue-300 transition-colors">
+                            Submit Claims for AI Vetting
+                        </button>
+                    </div>
+                    
+                    <div class="bg-white p-6 rounded-lg shadow-xl border border-gray-200">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">Profile Details</h3>
+                        <p class="text-gray-700"><span class="font-semibold">Name:</span> Jane Doe</p>
+                        <p class="text-gray-700 mt-1"><span class="font-semibold">Title:</span> Senior Software Architect</p>
+                        <p class="text-gray-700 mt-1"><span class="font-semibold">Member Since:</span> July 2024</p>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-2 space-y-6">
+                    
+                    <div class="bg-white p-6 rounded-lg shadow-xl border border-gray-200">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xl font-bold text-gray-800">Verifiable Claims</h3>
+                            <button class="text-sm text-navy-blue font-medium hover:text-electric-blue">+ Add New Claim</button>
+                        </div>
+                        
+                        <div class="border-b py-3 flex justify-between items-start">
+                            <div>
+                                <p class="font-semibold text-lg text-gray-700">Certified AWS Solutions Architect (2023)</p>
+                                <p class="text-sm text-gray-500 italic mt-1">"Validated my skills in deploying and managing AWS infrastructure. Certification ID: XYZ123."</p>
+                            </div>
+                            <span class="text-xs font-semibold px-3 py-1 rounded-full bg-green-100 text-green-800">VERIFIED</span>
+                        </div>
+                        
+                        <div class="py-3 flex justify-between items-start">
+                            <div>
+                                <p class="font-semibold text-lg text-gray-700">Led Microservices Migration Project (3 years experience)</p>
+                                <p class="text-sm text-gray-500 italic mt-1">"Successfully managed a 12-person team to migrate monolithic legacy system to a serverless microservices architecture."</p>
+                            </div>
+                            <span class="text-xs font-semibold px-3 py-1 rounded-full bg-yellow-100 text-yellow-800">PENDING</span>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white p-6 rounded-lg shadow-xl border border-gray-200">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">Vetting & Activity History</h3>
+                        <ul class="space-y-3">
+                            <li class="p-3 bg-gray-50 rounded-md border-l-4 border-[#69F0AE] text-sm text-gray-700">
+                                **Oct 21:** Trust Score updated to 9.2 based on new AWS certification.
+                            </li>
+                            <li class="p-3 bg-gray-50 rounded-md border-l-4 border-navy-blue text-sm text-gray-700">
+                                **Sep 05:** Initial profile created and submitted for vetting.
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="recruiter-view" class="app-view w-full hidden">
+    <h1 class="text-3xl font-bold text-navy-blue mb-6">Recruiter Dashboard</h1>
+
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+
+        <div class="lg:col-span-1 space-y-6">
+            
+            <div class="bg-white p-6 rounded-lg shadow-xl border-t-4 border-electric-blue">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">Quick Actions</h3>
+                <button class="w-full bg-electric-blue text-navy-blue py-2 rounded-md font-semibold hover:bg-blue-300 transition-colors mb-3">
+                    + Post New Job
+                </button>
+                <button class="w-full bg-gray-200 text-gray-700 py-2 rounded-md font-semibold hover:bg-gray-300 transition-colors">
+                    View My Postings (5)
+                </button>
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow-xl border border-gray-200">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">Account Metrics</h3>
+                <div class="space-y-3">
+                    <p class="flex justify-between text-gray-700"><span class="font-semibold">Vetted Candidates Saved:</span> <span class="text-navy-blue font-bold">12</span></p>
+                    <p class="flex justify-between text-gray-700"><span class="font-semibold">Verification Searches Today:</span> <span class="text-navy-blue font-bold">4</span></p>
+                    <p class="flex justify-between text-gray-700"><span class="font-semibold">API Search Limit:</span> <span class="text-green-600 font-bold">100 / Day</span></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-3 space-y-6">
+            
+            <div class="bg-white p-4 rounded-lg shadow-xl border border-gray-200 flex items-center space-x-3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input type="text" placeholder="Search for professionals by skill, role, or certification..." class="flex-grow border-none focus:ring-0 text-lg py-1.5">
+                <button class="bg-navy-blue text-white px-5 py-2 rounded-md font-semibold hover:bg-indigo-900 transition-colors">Search</button>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-xl border border-gray-200 divide-y divide-gray-200">
+                <h3 class="text-xl font-bold text-gray-800 p-4 border-b">Top Vetted Matches (3)</h3>
+
+                <div class="p-4 hover:bg-gray-50 transition-colors">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-xl font-semibold text-navy-blue">Michael Johnson</p>
+                            <p class="text-gray-600">DevOps Engineer | Certified Kubernetes Administrator</p>
+                            <div class="mt-2 text-sm space-x-3">
+                                <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">Kubernetes</span>
+                                <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">Terraform</span>
+                                <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">AWS</span>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-4xl font-extrabold text-[#69F0AE]">9.6</p>
+                            <p class="text-sm text-gray-500">Trust Score</p>
+                            <button class="mt-2 text-sm text-electric-blue hover:text-blue-300 font-medium">View Profile</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-4 hover:bg-gray-50 transition-colors">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-xl font-semibold text-navy-blue">Sarah Chen</p>
+                            <p class="text-gray-600">Senior Data Scientist | Python, TensorFlow</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-4xl font-extrabold text-[#69F0AE]">8.9</p>
+                            <p class="text-sm text-gray-500">Trust Score</p>
+                            <button class="mt-2 text-sm text-electric-blue hover:text-blue-300 font-medium">View Profile</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+        
+    </main>
+
+    <footer class="bg-gray-800 text-white mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 text-center text-sm">
+            &copy; 2025 TechTrust. All rights reserved. | 
+            <a href="#" class="text-electric-blue hover:text-blue-300 transition-colors">Terms & Privacy</a>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+
+</body>
+</html>
