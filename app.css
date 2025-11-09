@@ -5,7 +5,7 @@ body {
             flex-direction: column;
             min-height: 100vh;
         }
-        /* Define the core colors used in the dashboard */
+        /* Definition of the core colors used in the dashboard */
         .bg-navy-blue { background-color: #1A237E; }
         .text-navy-blue { color: #1A237E; }
         .bg-electric-blue { background-color: #4FC3F7; }
