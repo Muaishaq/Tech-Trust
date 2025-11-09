@@ -1,4 +1,4 @@
-// app.js - Final Working React App for CDN Environment (Day 15: Verification Source Tags)
+// app.js - Final Working React App for CDN Environment (Day 16: Mock Claim Verifier)
 
 // --- THEME CONFIGURATION ---
 const THEME_CONFIG = {
@@ -32,7 +32,7 @@ const ThemeContext = React.createContext(THEME_CONFIG.colors);
 const useTheme = () => React.useContext(ThemeContext);
 
 
-// --- MOCK API DATA (UPDATED for Day 15) ---
+// --- MOCK API DATA (UPDATED for Day 16) ---
 const MOCK_PROFILE_DATA = {
   name: "Jane Doe (React Dev)",
   title: "Senior Software Architect",
@@ -45,11 +45,17 @@ const MOCK_PROFILE_DATA = {
   ]
 };
 
-// 🚨 Day 15: Added verificationSource
 const MOCK_SEARCH_RESULTS = [
     { id: 101, name: "Michael Johnson", title: "DevOps Engineer", score: 9.6, skills: ["Kubernetes", "Terraform", "AWS"], verificationSource: "CNCF" },
     { id: 102, name: "Sarah Chen", title: "Senior Data Scientist", score: 8.9, skills: ["Python", "TensorFlow", "Spark"], verificationSource: "Project A-Z" },
     { id: 103, name: "Alex Vlasov", title: "Cybersecurity Analyst", score: 8.5, skills: ["CISSP", "Penetration Testing", "SIEM"], verificationSource: "ISC²" },
+];
+
+// 🚨 Day 16: New Mock Data for the Verifier Queue
+const MOCK_VERIFICATION_QUEUE = [
+    { id: 201, claimant: "Jane Doe", claimText: "Successfully deployed serverless authentication flow using Cognito.", proofUrl: "https://github.com/janedoe/auth-project-v2", submitted: "2 hours ago" },
+    { id: 202, claimant: "John Smith", claimText: "Completed 'Advanced Data Structures' course from Coursera.", proofUrl: "https://coursera.org/cert/johnsmith123", submitted: "1 day ago" },
+    { id: 203, claimant: "Pat Lee", claimText: "Wrote a custom Kubernetes operator in Go.", proofUrl: "https://github.com/patlee/k8s-operator", submitted: "2 days ago" },
 ];
 
 
@@ -60,6 +66,7 @@ const MOCK_SEARCH_RESULTS = [
 const Header = ({ currentView, setView, toggleTheme, themeMode }) => {
   const { primary, secondary, textOnPrimary } = useTheme(); 
   const isLoggedIn = currentView !== 'login'; 
+  const isVerifier = currentView === 'verifier';
 
   const handleLogout = () => {
     localStorage.clear(); 
@@ -73,6 +80,10 @@ const Header = ({ currentView, setView, toggleTheme, themeMode }) => {
         <nav className="space-x-6 hidden sm:flex">
           <a href="#" onClick={() => setView('profile')} className="font-medium hover:text-blue-300 transition-colors">Profile</a>
           <a href="#" onClick={() => setView('recruiter')} className="font-medium hover:text-blue-300 transition-colors">Job Board</a>
+          {/* 🚨 Day 16: Verifier Link */}
+          {isVerifier && 
+            <a href="#" onClick={() => setView('verifier')} className="font-medium text-yellow-300 hover:text-yellow-100 transition-colors">Verifier Console</a>
+          }
         </nav>
         
         <div className="flex items-center space-x-4">
@@ -93,12 +104,15 @@ const Header = ({ currentView, setView, toggleTheme, themeMode }) => {
 };
 
 // ====================================================================
-// 2. Authentication View
+// 2. Authentication View (Updated for Verifier)
 // ====================================================================
 
 const AuthView = ({ setView }) => {
   const { primary, secondary, textOnSecondary, neutralBg } = useTheme(); 
   const [isLogin, setIsLogin] = React.useState(true);
+  
+  // 🚨 Day 16: Added Verifier Type
+  const [userType, setUserType] = React.useState('professional');
 
   const handleAuth = (e, type) => {
     e.preventDefault();
@@ -111,20 +125,24 @@ const AuthView = ({ setView }) => {
         return;
     }
 
-    const userType = data.user_type || 'professional';
-    localStorage.setItem('techtust_user_type', userType); 
+    const finalUserType = isLogin ? userType : (data.user_type || 'professional');
+    
+    localStorage.setItem('techtust_user_type', finalUserType); 
     localStorage.setItem('techtust_token', 'mock-jwt-token');
 
     if (type === 'register') {
-        alert(`Registration successful! Account type: ${userType}. Please log in.`);
+        alert(`Registration successful! Account type: ${finalUserType}. Please log in.`);
         setIsLogin(true); 
         return;
     }
 
-    alert('Login successful!');
+    alert(`Login successful as a ${finalUserType}!`);
 
-    if (userType === 'recruiter') {
+    // Route to correct view
+    if (finalUserType === 'recruiter') {
       setView('recruiter');
+    } else if (finalUserType === 'verifier') {
+      setView('verifier');
     } else {
       setView('profile');
     }
@@ -144,11 +162,31 @@ const AuthView = ({ setView }) => {
       <form onSubmit={(e) => handleAuth(e, isLogin ? 'login' : 'register')} className="space-y-4">
         <h2 className="text-2xl font-bold text-gray-800">{isLogin ? 'Welcome Back' : 'Create Account'}</h2>
         {!isLogin && (
-          <div>
-            <label htmlFor="register-name" className="block text-sm font-medium text-gray-700">Full Name</label>
-            <input type="text" id="register-name" name="name" className={`mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-[${secondary}] focus:border-[${secondary}]`} required />
-          </div>
+            // Registration fields (unchanged)
+            // ...
+            <input type="hidden" name="user_type" value="professional" /> // Simple registration defaults to professional
         )}
+
+        {isLogin && (
+             <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Log In As</label>
+                <div className="flex space-x-4">
+                    <label className="inline-flex items-center">
+                        <input type="radio" name="login_type" value="professional" checked={userType === 'professional'} onChange={() => setUserType('professional')} className={`form-radio text-[${primary}] focus:ring-[${secondary}]`} />
+                        <span className="ml-2 text-gray-700">Tech Professional</span>
+                    </label>
+                    <label className="inline-flex items-center">
+                        <input type="radio" name="login_type" value="recruiter" checked={userType === 'recruiter'} onChange={() => setUserType('recruiter')} className={`form-radio text-[${primary}] focus:ring-[${secondary}]`} />
+                        <span className="ml-2 text-gray-700">Recruiter</span>
+                    </label>
+                     <label className="inline-flex items-center">
+                        <input type="radio" name="login_type" value="verifier" checked={userType === 'verifier'} onChange={() => setUserType('verifier')} className={`form-radio text-[${primary}] focus:ring-[${secondary}]`} />
+                        <span className="ml-2 text-gray-700">Verifier</span>
+                    </label>
+                </div>
+            </div>
+        )}
+        
         <div>
           <label htmlFor={`${isLogin ? 'login' : 'register'}-email`} className="block text-sm font-medium text-gray-700">Email Address</label>
           <input type="email" id={`${isLogin ? 'login' : 'register'}-email`} name="email" className={`mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-[${secondary}] focus:border-[${secondary}]`} required />
@@ -159,20 +197,14 @@ const AuthView = ({ setView }) => {
           <input type="password" id={`${isLogin ? 'login' : 'register'}-password`} name="password" className={`mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-[${secondary}] focus:border-[${secondary}]`} required />
         </div>
         
+        {/* Simplified registration to default to professional, login handles type selection */}
         {!isLogin && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Account Type</label>
-            <div className="flex space-x-4">
+             <div className="flex space-x-4">
               <label className="inline-flex items-center">
                 <input type="radio" name="user_type" value="professional" defaultChecked className={`form-radio text-[${primary}] focus:ring-[${secondary}]`} />
-                <span className="ml-2 text-gray-700">Tech Professional</span>
-              </label>
-              <label className="inline-flex items-center">
-                <input type="radio" name="user_type" value="recruiter" className={`form-radio text-[${primary}] focus:ring-[${secondary}]`} />
-                <span className="ml-2 text-gray-700">Recruiter</span>
+                <span className="ml-2 text-gray-700">Tech Professional (Default)</span>
               </label>
             </div>
-          </div>
         )}
 
         <button type="submit" className={`w-full py-2 rounded-md font-semibold transition-colors 
@@ -188,7 +220,7 @@ const AuthView = ({ setView }) => {
 };
 
 // ====================================================================
-// 3. Add Claim Modal 
+// 3. Add Claim Modal (unchanged)
 // ====================================================================
 
 const AddClaimModal = ({ isOpen, onClose, onClaimSubmitted }) => {
@@ -301,7 +333,7 @@ const AddClaimModal = ({ isOpen, onClose, onClaimSubmitted }) => {
 
 
 // ====================================================================
-// 4. Profile View 
+// 4. Profile View (unchanged)
 // ====================================================================
 
 const ProfileView = () => {
@@ -437,7 +469,7 @@ const ProfileView = () => {
 };
 
 // ====================================================================
-// 5. Recruiter View (Updated for Verification Source)
+// 5. Recruiter View (unchanged)
 // ====================================================================
 
 const RecruiterView = () => {
@@ -558,7 +590,7 @@ const RecruiterView = () => {
                                     <div className="flex-1">
                                         <p className={`text-xl font-semibold text-[${primary}]`}>{candidate.name}</p>
                                         
-                                        {/* 🚨 Day 15: Verification Source Tag */}
+                                        {/* Day 15: Verification Source Tag */}
                                         <div className="mt-1 flex items-center space-x-3">
                                             <p className="text-gray-600">{candidate.title}</p>
                                             <span className={`text-xs font-semibold px-2 py-0.5 rounded-full inline-block bg-indigo-100 text-indigo-800`}>
@@ -589,9 +621,73 @@ const RecruiterView = () => {
     );
 };
 
+// ====================================================================
+// 6. Verifier View (NEW for Day 16)
+// ====================================================================
+
+const VerifierView = () => {
+    const { primary, success, secondary, neutralBg } = useTheme();
+    const [queue, setQueue] = React.useState(MOCK_VERIFICATION_QUEUE);
+
+    const handleVerification = (claimId, result) => {
+        setQueue(prevQueue => prevQueue.filter(claim => claim.id !== claimId));
+
+        if (result === 'approve') {
+            alert(`✅ Claim ${claimId} Approved! Trust Score updated for claimant.`);
+        } else {
+            alert(`❌ Claim ${claimId} Rejected! Claimant will be notified.`);
+        }
+    };
+
+    return (
+        <div className="w-full max-w-4xl">
+            <h1 className={`text-3xl font-bold text-[${primary}] mb-6`}>M3: AI Vetting Console</h1>
+            <p className="text-lg text-gray-600 mb-8">Review claims flagged for human oversight after initial AI processing. ({queue.length} claims pending)</p>
+
+            {queue.length === 0 ? (
+                <div className={`p-8 text-center border-4 border-dashed border-green-300 rounded-lg bg-green-50`}>
+                    <p className="text-2xl font-semibold text-green-700">All caught up! The verification queue is currently empty.</p>
+                </div>
+            ) : (
+                <div className="space-y-4">
+                    {queue.map(claim => (
+                        <div key={claim.id} className={`bg-[${neutralBg}] p-6 rounded-lg shadow-lg border-l-4 border-yellow-500`}>
+                            <div className="flex justify-between items-start mb-3">
+                                <div>
+                                    <p className="text-sm font-semibold text-gray-500">CLAIM ID: {claim.id}</p>
+                                    <p className={`text-xl font-bold text-gray-800 mt-1`}>{claim.claimText}</p>
+                                    <p className="text-gray-600 mt-1">Claimant: <span className="font-semibold text-[${primary}]">{claim.claimant}</span></p>
+                                </div>
+                                <span className="text-sm text-yellow-600 font-medium bg-yellow-100 px-3 py-1 rounded-full">PENDING REVIEW</span>
+                            </div>
+                            
+                            <p className="text-sm text-gray-700 mt-2">Proof/Details: <a href={claim.proofUrl} target="_blank" className={`text-[${secondary}] hover:underline`}>{claim.proofUrl.length > 50 ? claim.proofUrl.substring(0, 50) + '...' : claim.proofUrl}</a></p>
+
+                            <div className="flex justify-end space-x-3 mt-4 pt-4 border-t border-gray-200">
+                                <button
+                                    onClick={() => handleVerification(claim.id, 'reject')}
+                                    className="px-4 py-2 text-sm font-medium text-red-700 bg-red-100 rounded-md hover:bg-red-200 transition-colors"
+                                >
+                                    Reject Claim
+                                </button>
+                                <button
+                                    onClick={() => handleVerification(claim.id, 'approve')}
+                                    className={`px-4 py-2 text-sm font-medium text-white bg-[${success}] rounded-md hover:bg-green-600 transition-colors`}
+                                >
+                                    Approve & Verify
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
 
 // ====================================================================
-// 6. App Component (The Main Router)
+// 7. App Component (The Main Router) - Updated for Verifier View
 // ====================================================================
 
 const App = () => {
@@ -609,14 +705,13 @@ const App = () => {
     const userType = localStorage.getItem('techtust_user_type');
     const token = localStorage.getItem('techtust_token');
     if (token && userType) {
-      setCurrentView(userType === 'recruiter' ? 'recruiter' : 'profile');
+      setCurrentView(userType); // Use stored userType directly as the view name
     } else {
       setCurrentView('login');
     }
   }, []);
 
   let content;
-  // Day 14: Used bg-gray-50 for light mode, so updating mainClass to remove it for better theme control
   let mainClass = "flex-grow max-w-7xl mx-auto w-full p-4 sm:p-8 "; 
 
   // Simple Router Logic
@@ -630,6 +725,10 @@ const App = () => {
     case 'recruiter':
       content = <RecruiterView />;
       break;
+    // 🚨 Day 16: New Verifier Route
+    case 'verifier':
+        content = <VerifierView />;
+        break;
     default:
       content = <AuthView setView={setCurrentView} />;
   }
@@ -646,7 +745,8 @@ const App = () => {
         />
         
         <main className={mainClass + " flex"}>
-          <div className="w-full h-full flex items-center justify-center">
+          {/* Center content horizontally and vertically only for AuthView */}
+          <div className={`w-full h-full flex ${currentView === 'login' ? 'items-center justify-center' : 'items-start justify-center'}`}>
             {content}
           </div>
         </main>
@@ -664,7 +764,7 @@ const App = () => {
 };
 
 // ====================================================================
-// 7. REACT MOUNTING LOGIC (Browser Entry Point)
+// 8. REACT MOUNTING LOGIC (Browser Entry Point)
 // ====================================================================
 
 const rootElement = document.getElementById('root');
