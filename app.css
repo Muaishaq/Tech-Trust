@@ -1,12 +1,7 @@
 body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6; /* Light Grey */
-            display: flex; 
-            flex-direction: column;
-            min-height: 100vh;
-        }
-        /* Definition of the core colors used in the dashboard */
-        .bg-navy-blue { background-color: #1A237E; }
-        .text-navy-blue { color: #1A237E; }
-        .bg-electric-blue { background-color: #4FC3F7; }
-        .text-electric-blue { color: #4FC3F7; }
+    font-family: 'Inter', sans-serif;
+    background-color: #f3f4f6; /* Light Grey */
+    display: flex; 
+    flex-direction: column;
+    min-height: 100vh;
+}

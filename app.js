@@ -1,24 +1,38 @@
-// app.js - Final Working React App for CDN Environment (Day 13: React Theme Context)
+// app.js - Final Working React App for CDN Environment (Day 15: Verification Source Tags)
 
-// 🚨 Day 13: NEW THEME CONFIGURATION (Replacing old global constants)
+// --- THEME CONFIGURATION ---
 const THEME_CONFIG = {
+  name: 'light',
   colors: {
     primary: '#1A237E', // Deep Navy Blue
     secondary: '#4FC3F7', // Electric Blue
     success: '#69F0AE', // Verified Green
     textOnPrimary: 'white',
-    textOnSecondary: '#1A237E', // Deep Navy Blue
-    neutral: 'white',
+    textOnSecondary: '#1A237E', 
+    neutralBg: 'white',
     border: '#e5e7eb', // gray-200
   }
 };
 
-// 🚨 Day 13: Theme Context Setup
+const DARK_THEME_CONFIG = {
+  name: 'dark',
+  colors: {
+    primary: '#BBDEFB', // Light Blue for contrast
+    secondary: '#00B0FF', // Sky Blue
+    success: '#69F0AE',
+    textOnPrimary: '#1A237E', 
+    textOnSecondary: '#1A237E',
+    neutralBg: '#212121', // Dark Gray background
+    border: '#424242', // Darker border
+  }
+};
+
+// --- Theme Context Setup ---
 const ThemeContext = React.createContext(THEME_CONFIG.colors);
 const useTheme = () => React.useContext(ThemeContext);
 
 
-// --- MOCK API DATA ---
+// --- MOCK API DATA (UPDATED for Day 15) ---
 const MOCK_PROFILE_DATA = {
   name: "Jane Doe (React Dev)",
   title: "Senior Software Architect",
@@ -31,19 +45,20 @@ const MOCK_PROFILE_DATA = {
   ]
 };
 
+// 🚨 Day 15: Added verificationSource
 const MOCK_SEARCH_RESULTS = [
-    { id: 101, name: "Michael Johnson", title: "DevOps Engineer", score: 9.6, skills: ["Kubernetes", "Terraform", "AWS"] },
-    { id: 102, name: "Sarah Chen", title: "Senior Data Scientist", score: 8.9, skills: ["Python", "TensorFlow", "Spark"] },
-    { id: 103, name: "Alex Vlasov", title: "Cybersecurity Analyst", score: 8.5, skills: ["CISSP", "Penetration Testing", "SIEM"] },
+    { id: 101, name: "Michael Johnson", title: "DevOps Engineer", score: 9.6, skills: ["Kubernetes", "Terraform", "AWS"], verificationSource: "CNCF" },
+    { id: 102, name: "Sarah Chen", title: "Senior Data Scientist", score: 8.9, skills: ["Python", "TensorFlow", "Spark"], verificationSource: "Project A-Z" },
+    { id: 103, name: "Alex Vlasov", title: "Cybersecurity Analyst", score: 8.5, skills: ["CISSP", "Penetration Testing", "SIEM"], verificationSource: "ISC²" },
 ];
 
 
 // ====================================================================
-// 1. Header Component (Now uses useTheme)
+// 1. Header Component
 // ====================================================================
 
-const Header = ({ currentView, setView }) => {
-  const { primary, secondary, textOnPrimary } = useTheme(); // 🚨 Consume Context
+const Header = ({ currentView, setView, toggleTheme, themeMode }) => {
+  const { primary, secondary, textOnPrimary } = useTheme(); 
   const isLoggedIn = currentView !== 'login'; 
 
   const handleLogout = () => {
@@ -59,28 +74,33 @@ const Header = ({ currentView, setView }) => {
           <a href="#" onClick={() => setView('profile')} className="font-medium hover:text-blue-300 transition-colors">Profile</a>
           <a href="#" onClick={() => setView('recruiter')} className="font-medium hover:text-blue-300 transition-colors">Job Board</a>
         </nav>
-        <button 
-          onClick={() => isLoggedIn ? handleLogout() : setView('login')} 
-          className={`ml-4 font-semibold px-4 py-1.5 rounded-full transition-colors text-sm 
-                      ${isLoggedIn ? 'bg-gray-200 text-gray-700 hover:bg-gray-300' : `bg-[${secondary}] text-[${primary}] hover:bg-blue-300`}`}
-        >
-          {isLoggedIn ? 'Logout' : 'Sign In'}
-        </button>
+        
+        <div className="flex items-center space-x-4">
+            <button onClick={toggleTheme} className="text-white hover:text-blue-300 transition-colors p-2 rounded-full hover:bg-white/10" title="Toggle Theme">
+                {themeMode === 'light' ? '🌙' : '☀️'}
+            </button>
+            <button 
+                onClick={() => isLoggedIn ? handleLogout() : setView('login')} 
+                className={`font-semibold px-4 py-1.5 rounded-full transition-colors text-sm 
+                            ${isLoggedIn ? 'bg-gray-200 text-gray-700 hover:bg-gray-300' : `bg-[${secondary}] text-[${primary}] hover:bg-blue-300`}`}
+            >
+                {isLoggedIn ? 'Logout' : 'Sign In'}
+            </button>
+        </div>
       </div>
     </header>
   );
 };
 
 // ====================================================================
-// 2. Authentication View (Now uses useTheme)
+// 2. Authentication View
 // ====================================================================
 
 const AuthView = ({ setView }) => {
-  const { primary, secondary, textOnSecondary } = useTheme(); // 🚨 Consume Context
+  const { primary, secondary, textOnSecondary, neutralBg } = useTheme(); 
   const [isLogin, setIsLogin] = React.useState(true);
 
   const handleAuth = (e, type) => {
-    // ... (Auth Logic is unchanged)
     e.preventDefault();
     const form = e.target.closest('form');
     const formData = new FormData(form);
@@ -111,7 +131,7 @@ const AuthView = ({ setView }) => {
   };
 
   return (
-    <div className="w-full max-w-lg bg-white p-8 rounded-lg shadow-xl border border-gray-200">
+    <div className={`w-full max-w-lg bg-[${neutralBg}] p-8 rounded-lg shadow-xl border border-gray-200`}>
       <div className="flex border-b border-gray-200 mb-6">
         <button onClick={() => setIsLogin(true)} className={`flex-1 py-2 text-lg font-semibold border-b-2 transition-colors ${isLogin ? `text-[${primary}] border-[${primary}]` : 'text-gray-500 border-transparent'}`}>
           Log In
@@ -168,11 +188,11 @@ const AuthView = ({ setView }) => {
 };
 
 // ====================================================================
-// 3. Add Claim Modal (Now uses useTheme)
+// 3. Add Claim Modal 
 // ====================================================================
 
 const AddClaimModal = ({ isOpen, onClose, onClaimSubmitted }) => {
-    const { primary, secondary } = useTheme(); // 🚨 Consume Context
+    const { primary, secondary, neutralBg } = useTheme(); 
     if (!isOpen) return null; 
     
     const [isLoading, setIsLoading] = React.useState(false); 
@@ -190,7 +210,7 @@ const AddClaimModal = ({ isOpen, onClose, onClaimSubmitted }) => {
         const claimPayload = {
             claim: title,
             details: details,
-            user_id: 123, // Mock user ID
+            user_id: 123, 
             submission_date: new Date().toISOString()
         };
 
@@ -224,7 +244,7 @@ const AddClaimModal = ({ isOpen, onClose, onClaimSubmitted }) => {
         <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 p-4">
             
             {/* Modal Content */}
-            <div className="bg-white rounded-lg shadow-2xl w-full max-w-xl p-6 relative">
+            <div className={`bg-[${neutralBg}] rounded-lg shadow-2xl w-full max-w-xl p-6 relative`}>
                 <h2 className={`text-2xl font-bold text-[${primary}] mb-4 border-b pb-2`}>Submit New Verifiable Claim</h2>
                 
                 {/* Close Button */}
@@ -281,11 +301,11 @@ const AddClaimModal = ({ isOpen, onClose, onClaimSubmitted }) => {
 
 
 // ====================================================================
-// 4. Profile View (Now uses useTheme)
+// 4. Profile View 
 // ====================================================================
 
 const ProfileView = () => {
-  const { primary, secondary, success } = useTheme(); // 🚨 Consume Context
+  const { primary, secondary, success, neutralBg } = useTheme(); 
   const [profile, setProfile] = React.useState(null);
   const [claims, setClaims] = React.useState([]); 
   const [loading, setLoading] = React.useState(true);
@@ -341,7 +361,7 @@ const ProfileView = () => {
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 w-full">
       {/* LEFT COLUMN */}
       <div className="lg:col-span-1 space-y-6">
-        <div className={`bg-white p-6 rounded-lg shadow-xl border-t-4 border-[${success}]`}>
+        <div className={`bg-[${neutralBg}] p-6 rounded-lg shadow-xl border-t-4 border-[${success}]`}>
           <h3 className="text-xl font-bold text-gray-800 mb-4">Verification Status</h3>
           <div className="text-center">
             <p className={`text-6xl font-extrabold text-[${primary}]`}>{profile.trustScore.toFixed(1)}</p>
@@ -353,7 +373,7 @@ const ProfileView = () => {
           </button>
         </div>
         
-        <div className="bg-white p-6 rounded-lg shadow-xl border border-gray-200">
+        <div className={`bg-[${neutralBg}] p-6 rounded-lg shadow-xl border border-gray-200`}>
           <h3 className="text-xl font-bold text-gray-800 mb-4">Profile Details</h3>
           <p className="text-gray-700"><span className="font-semibold">Name:</span> {profile.name}</p>
           <p className="text-gray-700 mt-1"><span className="font-semibold">Title:</span> {profile.title}</p>
@@ -363,7 +383,7 @@ const ProfileView = () => {
 
       {/* RIGHT COLUMN */}
       <div className="lg:col-span-2 space-y-6">
-        <div className="bg-white p-6 rounded-lg shadow-xl border border-gray-200">
+        <div className={`bg-[${neutralBg}] p-6 rounded-lg shadow-xl border border-gray-200`}>
             <div className="flex justify-between items-center mb-4">
                 <h3 className="text-xl font-bold text-gray-800">Verifiable Claims</h3>
                 <button 
@@ -417,11 +437,11 @@ const ProfileView = () => {
 };
 
 // ====================================================================
-// 5. Recruiter View (Now uses useTheme)
+// 5. Recruiter View (Updated for Verification Source)
 // ====================================================================
 
 const RecruiterView = () => {
-    const { primary, secondary, success } = useTheme(); // 🚨 Consume Context
+    const { primary, secondary, success, neutralBg } = useTheme(); 
     const [searchQuery, setSearchQuery] = React.useState('');
     const [searchResults, setSearchResults] = React.useState(MOCK_SEARCH_RESULTS);
     const [isLoading, setIsLoading] = React.useState(false);
@@ -469,7 +489,7 @@ const RecruiterView = () => {
                 {/* LEFT COLUMN: Metrics & Quick Actions */}
                 <div className="lg:col-span-1 space-y-6">
                     
-                    <div className={`bg-white p-6 rounded-lg shadow-xl border-t-4 border-[${secondary}]`}>
+                    <div className={`bg-[${neutralBg}] p-6 rounded-lg shadow-xl border-t-4 border-[${secondary}]`}>
                         <h3 className="text-xl font-bold text-gray-800 mb-4">Quick Actions</h3>
                         <button className={`w-full bg-[${secondary}] text-[${primary}] py-2 rounded-md font-semibold hover:bg-blue-300 transition-colors mb-3`}>
                             + Post New Job
@@ -479,7 +499,7 @@ const RecruiterView = () => {
                         </button>
                     </div>
 
-                    <div className="bg-white p-6 rounded-lg shadow-xl border border-gray-200">
+                    <div className={`bg-[${neutralBg}] p-6 rounded-lg shadow-xl border border-gray-200`}>
                         <h3 className="text-xl font-bold text-gray-800 mb-4">Account Metrics</h3>
                         <div className="space-y-3">
                             <p className="flex justify-between text-gray-700"><span className="font-semibold">Vetted Candidates Saved:</span> <span className={`text-[${primary}] font-bold`}>12</span></p>
@@ -493,7 +513,7 @@ const RecruiterView = () => {
                 <div className="lg:col-span-3 space-y-6">
                     
                     {/* Search Form */}
-                    <form onSubmit={handleSearch} className="bg-white p-4 rounded-lg shadow-xl border border-gray-200 flex items-center space-x-3">
+                    <form onSubmit={handleSearch} className={`bg-[${neutralBg}] p-4 rounded-lg shadow-xl border border-gray-200 flex items-center space-x-3`}>
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
@@ -515,7 +535,7 @@ const RecruiterView = () => {
                     </form>
 
                     {/* Dynamic Results List */}
-                    <div className="bg-white rounded-lg shadow-xl border border-gray-200 divide-y divide-gray-200">
+                    <div className={`bg-[${neutralBg}] rounded-lg shadow-xl border border-gray-200 divide-y divide-gray-200`}>
                         <h3 className="text-xl font-bold text-gray-800 p-4 border-b">
                             Search Results ({searchResults.length})
                         </h3>
@@ -534,10 +554,18 @@ const RecruiterView = () => {
 
                         {!isLoading && searchResults.map(candidate => (
                             <div key={candidate.id} className="p-4 hover:bg-gray-50 transition-colors">
-                                <div className="flex justify-between items-start">
-                                    <div>
+                                <div className="flex justify-between items-center">
+                                    <div className="flex-1">
                                         <p className={`text-xl font-semibold text-[${primary}]`}>{candidate.name}</p>
-                                        <p className="text-gray-600">{candidate.title}</p>
+                                        
+                                        {/* 🚨 Day 15: Verification Source Tag */}
+                                        <div className="mt-1 flex items-center space-x-3">
+                                            <p className="text-gray-600">{candidate.title}</p>
+                                            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full inline-block bg-indigo-100 text-indigo-800`}>
+                                                Verified by: {candidate.verificationSource}
+                                            </span>
+                                        </div>
+
                                         <div className="mt-2 text-sm space-x-3">
                                             {candidate.skills.map(skill => (
                                                 <span key={skill} className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full inline-block">
@@ -563,12 +591,19 @@ const RecruiterView = () => {
 
 
 // ====================================================================
-// 6. App Component (The Main Router) - Now uses ThemeContext.Provider
+// 6. App Component (The Main Router)
 // ====================================================================
 
 const App = () => {
-  const { secondary } = THEME_CONFIG.colors; // Use config directly for footer for simplicity
   const [currentView, setCurrentView] = React.useState('login'); 
+  const [themeMode, setThemeMode] = React.useState('light'); 
+
+  const toggleTheme = () => {
+    setThemeMode(prevMode => prevMode === 'light' ? 'dark' : 'light');
+  };
+
+  const activeTheme = themeMode === 'light' ? THEME_CONFIG : DARK_THEME_CONFIG;
+  const { secondary } = activeTheme.colors;
 
   React.useEffect(() => {
     const userType = localStorage.getItem('techtust_user_type');
@@ -581,7 +616,8 @@ const App = () => {
   }, []);
 
   let content;
-  let mainClass = "flex-grow max-w-7xl mx-auto w-full p-4 sm:p-8 ";
+  // Day 14: Used bg-gray-50 for light mode, so updating mainClass to remove it for better theme control
+  let mainClass = "flex-grow max-w-7xl mx-auto w-full p-4 sm:p-8 "; 
 
   // Simple Router Logic
   switch (currentView) {
@@ -599,10 +635,15 @@ const App = () => {
   }
 
   return (
-    // 🚨 Day 13: Wrapping the application with the ThemeContext Provider
-    <ThemeContext.Provider value={THEME_CONFIG.colors}>
-      <div className="min-h-screen flex flex-col">
-        <Header currentView={currentView} setView={setCurrentView} />
+    <ThemeContext.Provider value={activeTheme.colors}>
+      {/* Set the main application background based on theme mode */}
+      <div className={`min-h-screen flex flex-col ${themeMode === 'dark' ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-800'}`}>
+        <Header 
+            currentView={currentView} 
+            setView={setCurrentView} 
+            toggleTheme={toggleTheme} 
+            themeMode={themeMode} 
+        />
         
         <main className={mainClass + " flex"}>
           <div className="w-full h-full flex items-center justify-center">
