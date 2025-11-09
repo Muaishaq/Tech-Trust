@@ -1,11 +1,24 @@
-// app.js - Final Working React App for CDN Environment (Day 11: Claim Management)
+// app.js - Final Working React App for CDN Environment (Day 13: React Theme Context)
 
-// --- Global Constants & Colors ---
-const NAVY_BLUE = '#1A237E';
-const ELECTRIC_BLUE = '#4FC3F7';
-const VERIFIED_GREEN = '#69F0AE';
+// 🚨 Day 13: NEW THEME CONFIGURATION (Replacing old global constants)
+const THEME_CONFIG = {
+  colors: {
+    primary: '#1A237E', // Deep Navy Blue
+    secondary: '#4FC3F7', // Electric Blue
+    success: '#69F0AE', // Verified Green
+    textOnPrimary: 'white',
+    textOnSecondary: '#1A237E', // Deep Navy Blue
+    neutral: 'white',
+    border: '#e5e7eb', // gray-200
+  }
+};
 
-// --- MOCK API DATA (Day 6 Implementation) ---
+// 🚨 Day 13: Theme Context Setup
+const ThemeContext = React.createContext(THEME_CONFIG.colors);
+const useTheme = () => React.useContext(ThemeContext);
+
+
+// --- MOCK API DATA ---
 const MOCK_PROFILE_DATA = {
   name: "Jane Doe (React Dev)",
   title: "Senior Software Architect",
@@ -18,11 +31,19 @@ const MOCK_PROFILE_DATA = {
   ]
 };
 
+const MOCK_SEARCH_RESULTS = [
+    { id: 101, name: "Michael Johnson", title: "DevOps Engineer", score: 9.6, skills: ["Kubernetes", "Terraform", "AWS"] },
+    { id: 102, name: "Sarah Chen", title: "Senior Data Scientist", score: 8.9, skills: ["Python", "TensorFlow", "Spark"] },
+    { id: 103, name: "Alex Vlasov", title: "Cybersecurity Analyst", score: 8.5, skills: ["CISSP", "Penetration Testing", "SIEM"] },
+];
+
+
 // ====================================================================
-// 1. Header Component
+// 1. Header Component (Now uses useTheme)
 // ====================================================================
 
 const Header = ({ currentView, setView }) => {
+  const { primary, secondary, textOnPrimary } = useTheme(); // 🚨 Consume Context
   const isLoggedIn = currentView !== 'login'; 
 
   const handleLogout = () => {
@@ -31,7 +52,7 @@ const Header = ({ currentView, setView }) => {
   };
 
   return (
-    <header className={`bg-[${NAVY_BLUE}] text-white shadow-lg`}>
+    <header className={`bg-[${primary}] text-[${textOnPrimary}] shadow-lg`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
         <div className="text-2xl font-bold tracking-wider">TechTrust</div>
         <nav className="space-x-6 hidden sm:flex">
@@ -41,7 +62,7 @@ const Header = ({ currentView, setView }) => {
         <button 
           onClick={() => isLoggedIn ? handleLogout() : setView('login')} 
           className={`ml-4 font-semibold px-4 py-1.5 rounded-full transition-colors text-sm 
-                      ${isLoggedIn ? 'bg-gray-200 text-gray-700 hover:bg-gray-300' : `bg-[${ELECTRIC_BLUE}] text-[${NAVY_BLUE}] hover:bg-blue-300`}`}
+                      ${isLoggedIn ? 'bg-gray-200 text-gray-700 hover:bg-gray-300' : `bg-[${secondary}] text-[${primary}] hover:bg-blue-300`}`}
         >
           {isLoggedIn ? 'Logout' : 'Sign In'}
         </button>
@@ -51,13 +72,15 @@ const Header = ({ currentView, setView }) => {
 };
 
 // ====================================================================
-// 2. Authentication View
+// 2. Authentication View (Now uses useTheme)
 // ====================================================================
 
 const AuthView = ({ setView }) => {
+  const { primary, secondary, textOnSecondary } = useTheme(); // 🚨 Consume Context
   const [isLogin, setIsLogin] = React.useState(true);
 
   const handleAuth = (e, type) => {
+    // ... (Auth Logic is unchanged)
     e.preventDefault();
     const form = e.target.closest('form');
     const formData = new FormData(form);
@@ -90,10 +113,10 @@ const AuthView = ({ setView }) => {
   return (
     <div className="w-full max-w-lg bg-white p-8 rounded-lg shadow-xl border border-gray-200">
       <div className="flex border-b border-gray-200 mb-6">
-        <button onClick={() => setIsLogin(true)} className={`flex-1 py-2 text-lg font-semibold border-b-2 transition-colors ${isLogin ? `text-[${NAVY_BLUE}] border-[${NAVY_BLUE}]` : 'text-gray-500 border-transparent'}`}>
+        <button onClick={() => setIsLogin(true)} className={`flex-1 py-2 text-lg font-semibold border-b-2 transition-colors ${isLogin ? `text-[${primary}] border-[${primary}]` : 'text-gray-500 border-transparent'}`}>
           Log In
         </button>
-        <button onClick={() => setIsLogin(false)} className={`flex-1 py-2 text-lg font-semibold border-b-2 transition-colors ${!isLogin ? `text-[${NAVY_BLUE}] border-[${NAVY_BLUE}]` : 'text-gray-500 border-transparent'}`}>
+        <button onClick={() => setIsLogin(false)} className={`flex-1 py-2 text-lg font-semibold border-b-2 transition-colors ${!isLogin ? `text-[${primary}] border-[${primary}]` : 'text-gray-500 border-transparent'}`}>
           Register
         </button>
       </div>
@@ -103,17 +126,17 @@ const AuthView = ({ setView }) => {
         {!isLogin && (
           <div>
             <label htmlFor="register-name" className="block text-sm font-medium text-gray-700">Full Name</label>
-            <input type="text" id="register-name" name="name" className={`mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-[${ELECTRIC_BLUE}] focus:border-[${ELECTRIC_BLUE}]`} required />
+            <input type="text" id="register-name" name="name" className={`mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-[${secondary}] focus:border-[${secondary}]`} required />
           </div>
         )}
         <div>
           <label htmlFor={`${isLogin ? 'login' : 'register'}-email`} className="block text-sm font-medium text-gray-700">Email Address</label>
-          <input type="email" id={`${isLogin ? 'login' : 'register'}-email`} name="email" className={`mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-[${ELECTRIC_BLUE}] focus:border-[${ELECTRIC_BLUE}]`} required />
+          <input type="email" id={`${isLogin ? 'login' : 'register'}-email`} name="email" className={`mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-[${secondary}] focus:border-[${secondary}]`} required />
         </div>
         
         <div>
           <label htmlFor={`${isLogin ? 'login' : 'register'}-password`} className="block text-sm font-medium text-gray-700">Password</label>
-          <input type="password" id={`${isLogin ? 'login' : 'register'}-password`} name="password" className={`mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-[${ELECTRIC_BLUE}] focus:border-[${ELECTRIC_BLUE}]`} required />
+          <input type="password" id={`${isLogin ? 'login' : 'register'}-password`} name="password" className={`mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-[${secondary}] focus:border-[${secondary}]`} required />
         </div>
         
         {!isLogin && (
@@ -121,11 +144,11 @@ const AuthView = ({ setView }) => {
             <label className="block text-sm font-medium text-gray-700 mb-1">Account Type</label>
             <div className="flex space-x-4">
               <label className="inline-flex items-center">
-                <input type="radio" name="user_type" value="professional" defaultChecked className={`form-radio text-[${NAVY_BLUE}] focus:ring-[${ELECTRIC_BLUE}]`} />
+                <input type="radio" name="user_type" value="professional" defaultChecked className={`form-radio text-[${primary}] focus:ring-[${secondary}]`} />
                 <span className="ml-2 text-gray-700">Tech Professional</span>
               </label>
               <label className="inline-flex items-center">
-                <input type="radio" name="user_type" value="recruiter" className={`form-radio text-[${NAVY_BLUE}] focus:ring-[${ELECTRIC_BLUE}]`} />
+                <input type="radio" name="user_type" value="recruiter" className={`form-radio text-[${primary}] focus:ring-[${secondary}]`} />
                 <span className="ml-2 text-gray-700">Recruiter</span>
               </label>
             </div>
@@ -134,8 +157,8 @@ const AuthView = ({ setView }) => {
 
         <button type="submit" className={`w-full py-2 rounded-md font-semibold transition-colors 
             ${isLogin 
-                ? `bg-[${NAVY_BLUE}] text-white hover:bg-indigo-900` 
-                : `bg-[${ELECTRIC_BLUE}] text-[${NAVY_BLUE}] hover:bg-blue-300`}`}
+                ? `bg-[${primary}] text-white hover:bg-indigo-900` 
+                : `bg-[${secondary}] text-[${textOnSecondary}] hover:bg-blue-300`}`}
         >
           {isLogin ? 'Log In' : 'Register Account'}
         </button>
@@ -145,10 +168,11 @@ const AuthView = ({ setView }) => {
 };
 
 // ====================================================================
-// 3. Add Claim Modal 
+// 3. Add Claim Modal (Now uses useTheme)
 // ====================================================================
 
 const AddClaimModal = ({ isOpen, onClose, onClaimSubmitted }) => {
+    const { primary, secondary } = useTheme(); // 🚨 Consume Context
     if (!isOpen) return null; 
     
     const [isLoading, setIsLoading] = React.useState(false); 
@@ -170,13 +194,10 @@ const AddClaimModal = ({ isOpen, onClose, onClaimSubmitted }) => {
             submission_date: new Date().toISOString()
         };
 
-        const API_ENDPOINT = '/api/v1/claims/submit'; 
-
         try {
-            // Simulate a network delay of 2 seconds for visibility
             await new Promise(resolve => setTimeout(resolve, 2000));
             
-            const isMockSuccess = Math.random() > 0.1; // 90% success rate
+            const isMockSuccess = Math.random() > 0.1;
 
             if (isMockSuccess) {
                 console.log('Claim submission successful:', claimPayload);
@@ -186,7 +207,6 @@ const AddClaimModal = ({ isOpen, onClose, onClaimSubmitted }) => {
                     onClaimSubmitted(claimPayload);
                 }
             } else {
-                // Mock a server error
                 throw new Error("API Error: Claim too vague or failed initial validation.");
             }
 
@@ -205,7 +225,7 @@ const AddClaimModal = ({ isOpen, onClose, onClaimSubmitted }) => {
             
             {/* Modal Content */}
             <div className="bg-white rounded-lg shadow-2xl w-full max-w-xl p-6 relative">
-                <h2 className={`text-2xl font-bold text-[${NAVY_BLUE}] mb-4 border-b pb-2`}>Submit New Verifiable Claim</h2>
+                <h2 className={`text-2xl font-bold text-[${primary}] mb-4 border-b pb-2`}>Submit New Verifiable Claim</h2>
                 
                 {/* Close Button */}
                 <button onClick={onClose} 
@@ -221,7 +241,7 @@ const AddClaimModal = ({ isOpen, onClose, onClaimSubmitted }) => {
                         <label htmlFor="claim-title" className="block text-sm font-medium text-gray-700">Claim Title / Certification Name</label>
                         <input type="text" id="claim-title" name="claim-title" required 
                             disabled={isLoading}
-                            className={`mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-[${ELECTRIC_BLUE}] focus:border-[${ELECTRIC_BLUE}] disabled:opacity-50`}
+                            className={`mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-[${secondary}] focus:border-[${secondary}] disabled:opacity-50`}
                             placeholder="e.g., Certified Kubernetes Administrator"
                         />
                     </div>
@@ -230,7 +250,7 @@ const AddClaimModal = ({ isOpen, onClose, onClaimSubmitted }) => {
                         <label htmlFor="claim-details" className="block text-sm font-medium text-gray-700">Detailed Description / Proof (URL or Text)</label>
                         <textarea id="claim-details" name="claim-details" rows="4" required 
                             disabled={isLoading}
-                            className={`mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-[${ELECTRIC_BLUE}] focus:border-[${ELECTRIC_BLUE}] disabled:opacity-50`}
+                            className={`mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-[${secondary}] focus:border-[${secondary}] disabled:opacity-50`}
                             placeholder="Provide link to certificate, GitHub repo, or detailed project summary (Max 500 chars for AI vetting)"
                         ></textarea>
                     </div>
@@ -248,7 +268,7 @@ const AddClaimModal = ({ isOpen, onClose, onClaimSubmitted }) => {
                         </button>
                         <button type="submit" 
                             disabled={isLoading}
-                            className={`px-4 py-2 text-sm font-medium text-white bg-[${NAVY_BLUE}] rounded-md hover:bg-indigo-900 transition-colors disabled:opacity-50`}
+                            className={`px-4 py-2 text-sm font-medium text-white bg-[${primary}] rounded-md hover:bg-indigo-900 transition-colors disabled:opacity-50`}
                         >
                             {isLoading ? 'Submitting...' : 'Submit for Verification'}
                         </button>
@@ -261,10 +281,11 @@ const AddClaimModal = ({ isOpen, onClose, onClaimSubmitted }) => {
 
 
 // ====================================================================
-// 4. Profile View (Day 11 Component: Claim Management)
+// 4. Profile View (Now uses useTheme)
 // ====================================================================
 
 const ProfileView = () => {
+  const { primary, secondary, success } = useTheme(); // 🚨 Consume Context
   const [profile, setProfile] = React.useState(null);
   const [claims, setClaims] = React.useState([]); 
   const [loading, setLoading] = React.useState(true);
@@ -282,7 +303,6 @@ const ProfileView = () => {
 
     fetchProfileData().then(data => {
       setProfile(data);
-      // Initialize claims state from mock data
       setClaims(data.claims); 
       setLoading(false);
     });
@@ -297,11 +317,9 @@ const ProfileView = () => {
       setClaims(prevClaims => [newMockClaim, ...prevClaims]);
   };
 
-  // 🚨 Day 11: New function to handle Edit and Delete actions
   const handleClaimAction = (claimId, action) => {
     if (action === 'delete') {
       if (window.confirm("Are you sure you want to delete this claim? This action cannot be undone.")) {
-        // Use filter to remove the claim by its unique ID
         setClaims(prevClaims => prevClaims.filter(c => c.id !== claimId));
         alert('Claim successfully deleted.');
       }
@@ -323,14 +341,14 @@ const ProfileView = () => {
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 w-full">
       {/* LEFT COLUMN */}
       <div className="lg:col-span-1 space-y-6">
-        <div className={`bg-white p-6 rounded-lg shadow-xl border-t-4 border-[${VERIFIED_GREEN}]`}>
+        <div className={`bg-white p-6 rounded-lg shadow-xl border-t-4 border-[${success}]`}>
           <h3 className="text-xl font-bold text-gray-800 mb-4">Verification Status</h3>
           <div className="text-center">
-            <p className={`text-6xl font-extrabold text-[${NAVY_BLUE}]`}>{profile.trustScore.toFixed(1)}</p>
-            <p className={`text-lg font-semibold text-[${VERIFIED_GREEN}] mt-1`}>AI Trust Score</p>
+            <p className={`text-6xl font-extrabold text-[${primary}]`}>{profile.trustScore.toFixed(1)}</p>
+            <p className={`text-lg font-semibold text-[${success}] mt-1`}>AI Trust Score</p>
             <p className="text-sm text-gray-500 mt-2">Last Vetted: {profile.lastVetted}</p>
           </div>
-          <button className={`mt-6 w-full bg-[${ELECTRIC_BLUE}] text-[${NAVY_BLUE}] py-2 rounded-md font-semibold hover:bg-blue-300 transition-colors`}>
+          <button className={`mt-6 w-full bg-[${secondary}] text-[${primary}] py-2 rounded-md font-semibold hover:bg-blue-300 transition-colors`}>
             Submit Claims for AI Vetting
           </button>
         </div>
@@ -350,13 +368,12 @@ const ProfileView = () => {
                 <h3 className="text-xl font-bold text-gray-800">Verifiable Claims</h3>
                 <button 
                     onClick={() => setIsModalOpen(true)} 
-                    className={`text-sm text-[${NAVY_BLUE}] font-medium hover:text-[${ELECTRIC_BLUE}]`}
+                    className={`text-sm text-[${primary}] font-medium hover:text-[${secondary}]`}
                 >
                     + Add New Claim
                 </button>
             </div>
           
-          {/* 🚨 Day 11: Claims list with Edit/Delete buttons */}
           {claims.map(claim => (
             <div key={claim.id} className="border-b py-3 flex justify-between items-start last:border-b-0">
               {/* Left side: Text and Status */}
@@ -400,99 +417,157 @@ const ProfileView = () => {
 };
 
 // ====================================================================
-// 5. Recruiter View
+// 5. Recruiter View (Now uses useTheme)
 // ====================================================================
 
-const RecruiterView = () => (
-    <div className="w-full">
-        <h1 className={`text-3xl font-bold text-[${NAVY_BLUE}] mb-6`}>Recruiter Dashboard</h1>
-        {/* ... (The recruiter view remains the same) ... */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+const RecruiterView = () => {
+    const { primary, secondary, success } = useTheme(); // 🚨 Consume Context
+    const [searchQuery, setSearchQuery] = React.useState('');
+    const [searchResults, setSearchResults] = React.useState(MOCK_SEARCH_RESULTS);
+    const [isLoading, setIsLoading] = React.useState(false);
 
-            {/* LEFT COLUMN: Metrics & Quick Actions */}
-            <div className="lg:col-span-1 space-y-6">
-                
-                <div className={`bg-white p-6 rounded-lg shadow-xl border-t-4 border-[${ELECTRIC_BLUE}]`}>
-                    <h3 className="text-xl font-bold text-gray-800 mb-4">Quick Actions</h3>
-                    <button className={`w-full bg-[${ELECTRIC_BLUE}] text-[${NAVY_BLUE}] py-2 rounded-md font-semibold hover:bg-blue-300 transition-colors mb-3`}>
-                        + Post New Job
-                    </button>
-                    <button className="w-full bg-gray-200 text-gray-700 py-2 rounded-md font-semibold hover:bg-gray-300 transition-colors">
-                        View My Postings (5)
-                    </button>
-                </div>
+    const handleSearch = async (e) => {
+        e.preventDefault();
+        
+        if (!searchQuery.trim()) {
+            alert('Please enter a search term.');
+            return;
+        }
 
-                <div className="bg-white p-6 rounded-lg shadow-xl border border-gray-200">
-                    <h3 className="text-xl font-bold text-gray-800 mb-4">Account Metrics</h3>
-                    <div className="space-y-3">
-                        <p className="flex justify-between text-gray-700"><span className="font-semibold">Vetted Candidates Saved:</span> <span className={`text-[${NAVY_BLUE}] font-bold`}>12</span></p>
-                        <p className="flex justify-between text-gray-700"><span className="font-semibold">Verification Searches Today:</span> <span className={`text-[${NAVY_BLUE}] font-bold`}>4</span></p>
-                        <p className="flex justify-between text-gray-700"><span className="font-semibold">API Search Limit:</span> <span className="text-green-600 font-bold">100 / Day</span></p>
+        setIsLoading(true);
+
+        try {
+            await new Promise(resolve => setTimeout(resolve, 1500)); 
+
+            const query = searchQuery.toLowerCase();
+            const results = MOCK_SEARCH_RESULTS.filter(candidate => 
+                candidate.title.toLowerCase().includes(query) || 
+                candidate.skills.some(skill => skill.toLowerCase().includes(query))
+            );
+
+            if (results.length === 0) {
+                setSearchResults(MOCK_SEARCH_RESULTS);
+                alert(`No perfect matches found for "${searchQuery}". Showing featured candidates instead.`);
+            } else {
+                setSearchResults(results);
+            }
+
+        } catch (error) {
+            console.error('Search failed:', error);
+            alert('Search failed. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    return (
+        <div className="w-full">
+            <h1 className={`text-3xl font-bold text-[${primary}] mb-6`}>Recruiter Dashboard</h1>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+
+                {/* LEFT COLUMN: Metrics & Quick Actions */}
+                <div className="lg:col-span-1 space-y-6">
+                    
+                    <div className={`bg-white p-6 rounded-lg shadow-xl border-t-4 border-[${secondary}]`}>
+                        <h3 className="text-xl font-bold text-gray-800 mb-4">Quick Actions</h3>
+                        <button className={`w-full bg-[${secondary}] text-[${primary}] py-2 rounded-md font-semibold hover:bg-blue-300 transition-colors mb-3`}>
+                            + Post New Job
+                        </button>
+                        <button className="w-full bg-gray-200 text-gray-700 py-2 rounded-md font-semibold hover:bg-gray-300 transition-colors">
+                            View My Postings (5)
+                        </button>
+                    </div>
+
+                    <div className="bg-white p-6 rounded-lg shadow-xl border border-gray-200">
+                        <h3 className="text-xl font-bold text-gray-800 mb-4">Account Metrics</h3>
+                        <div className="space-y-3">
+                            <p className="flex justify-between text-gray-700"><span className="font-semibold">Vetted Candidates Saved:</span> <span className={`text-[${primary}] font-bold`}>12</span></p>
+                            <p className="flex justify-between text-gray-700"><span className="font-semibold">Verification Searches Today:</span> <span className={`text-[${primary}] font-bold`}>4</span></p>
+                            <p className="flex justify-between text-gray-700"><span className="font-semibold">API Search Limit:</span> <span className="text-green-600 font-bold">100 / Day</span></p>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            {/* RIGHT COLUMN: Search & Results */}
-            <div className="lg:col-span-3 space-y-6">
-                
-                <div className="bg-white p-4 rounded-lg shadow-xl border border-gray-200 flex items-center space-x-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                    <input type="text" placeholder="Search for professionals by skill, role, or certification..." className="flex-grow border-none focus:ring-0 text-lg py-1.5"/>
-                    <button className={`bg-[${NAVY_BLUE}] text-white px-5 py-2 rounded-md font-semibold hover:bg-indigo-900 transition-colors`}>Search</button>
-                </div>
+                {/* RIGHT COLUMN: Search & Results */}
+                <div className="lg:col-span-3 space-y-6">
+                    
+                    {/* Search Form */}
+                    <form onSubmit={handleSearch} className="bg-white p-4 rounded-lg shadow-xl border border-gray-200 flex items-center space-x-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        <input 
+                            type="text" 
+                            placeholder="Search for professionals by skill, role, or certification (e.g., 'Kubernetes' or 'Data Scientist')..." 
+                            className="flex-grow border-none focus:ring-0 text-lg py-1.5"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            disabled={isLoading}
+                        />
+                        <button 
+                            type="submit"
+                            disabled={isLoading}
+                            className={`bg-[${primary}] text-white px-5 py-2 rounded-md font-semibold transition-colors disabled:opacity-50 hover:bg-indigo-900`}
+                        >
+                            {isLoading ? 'Searching...' : 'Search'}
+                        </button>
+                    </form>
 
-                <div className="bg-white rounded-lg shadow-xl border border-gray-200 divide-y divide-gray-200">
-                    <h3 className="text-xl font-bold text-gray-800 p-4 border-b">Top Vetted Matches (3)</h3>
+                    {/* Dynamic Results List */}
+                    <div className="bg-white rounded-lg shadow-xl border border-gray-200 divide-y divide-gray-200">
+                        <h3 className="text-xl font-bold text-gray-800 p-4 border-b">
+                            Search Results ({searchResults.length})
+                        </h3>
 
-                    {/* Result Item 1 */}
-                    <div className="p-4 hover:bg-gray-50 transition-colors">
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <p className={`text-xl font-semibold text-[${NAVY_BLUE}]`}>Michael Johnson</p>
-                                <p className="text-gray-600">DevOps Engineer | Certified Kubernetes Administrator</p>
-                                <div className="mt-2 text-sm space-x-3">
-                                    <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">Kubernetes</span>
-                                    <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">Terraform</span>
-                                    <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">AWS</span>
+                        {isLoading && (
+                            <div className="p-4 text-center text-gray-500">
+                                Fetching candidates...
+                            </div>
+                        )}
+
+                        {!isLoading && searchResults.length === 0 && (
+                            <div className="p-4 text-center text-gray-500">
+                                No candidates matched your search criteria. Try "Kubernetes" or "Data Scientist".
+                            </div>
+                        )}
+
+                        {!isLoading && searchResults.map(candidate => (
+                            <div key={candidate.id} className="p-4 hover:bg-gray-50 transition-colors">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <p className={`text-xl font-semibold text-[${primary}]`}>{candidate.name}</p>
+                                        <p className="text-gray-600">{candidate.title}</p>
+                                        <div className="mt-2 text-sm space-x-3">
+                                            {candidate.skills.map(skill => (
+                                                <span key={skill} className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full inline-block">
+                                                    {skill}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className={`text-4xl font-extrabold text-[${success}]`}>{candidate.score.toFixed(1)}</p>
+                                        <p className="text-sm text-gray-500">Trust Score</p>
+                                        <button className={`mt-2 text-sm text-[${secondary}] hover:text-blue-300 font-medium`}>View Profile</button>
+                                    </div>
                                 </div>
                             </div>
-                            <div className="text-right">
-                                <p className={`text-4xl font-extrabold text-[${VERIFIED_GREEN}]`}>9.6</p>
-                                <p className="text-sm text-gray-500">Trust Score</p>
-                                <button className={`mt-2 text-sm text-[${ELECTRIC_BLUE}] hover:text-blue-300 font-medium`}>View Profile</button>
-                            </div>
-                        </div>
+                        ))}
                     </div>
-
-                    {/* Result Item 2 */}
-                    <div className="p-4 hover:bg-gray-50 transition-colors">
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <p className={`text-xl font-semibold text-[${NAVY_BLUE}]`}>Sarah Chen</p>
-                                <p className="text-gray-600">Senior Data Scientist | Python, TensorFlow</p>
-                            </div>
-                            <div className="text-right">
-                                <p className={`text-4xl font-extrabold text-[${VERIFIED_GREEN}]`}>8.9</p>
-                                <p className="text-sm text-gray-500">Trust Score</p>
-                                <button className={`mt-2 text-sm text-[${ELECTRIC_BLUE}] hover:text-blue-300 font-medium`}>View Profile</button>
-                            </div>
-                        </div>
-                    </div>
-
                 </div>
             </div>
         </div>
-    </div>
-);
+    );
+};
 
 
 // ====================================================================
-// 6. App Component (The Main Router)
+// 6. App Component (The Main Router) - Now uses ThemeContext.Provider
 // ====================================================================
 
 const App = () => {
+  const { secondary } = THEME_CONFIG.colors; // Use config directly for footer for simplicity
   const [currentView, setCurrentView] = React.useState('login'); 
 
   React.useEffect(() => {
@@ -524,23 +599,26 @@ const App = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Header currentView={currentView} setView={setCurrentView} />
-      
-      <main className={mainClass + " flex"}>
-        <div className="w-full h-full flex items-center justify-center">
-          {content}
-        </div>
-      </main>
+    // 🚨 Day 13: Wrapping the application with the ThemeContext Provider
+    <ThemeContext.Provider value={THEME_CONFIG.colors}>
+      <div className="min-h-screen flex flex-col">
+        <Header currentView={currentView} setView={setCurrentView} />
+        
+        <main className={mainClass + " flex"}>
+          <div className="w-full h-full flex items-center justify-center">
+            {content}
+          </div>
+        </main>
 
-      {/* Footer Component */}
-      <footer className="bg-gray-800 text-white mt-auto">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 text-center text-sm">
-          &copy; 2025 TechTrust. All rights reserved. | 
-          <a href="#" className={`text-[${ELECTRIC_BLUE}] hover:text-blue-300 transition-colors`}>Terms & Privacy</a>
-        </div>
-      </footer>
-    </div>
+        {/* Footer Component */}
+        <footer className="bg-gray-800 text-white mt-auto">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 text-center text-sm">
+            &copy; 2025 TechTrust. All rights reserved. | 
+            <a href="#" className={`text-[${secondary}] hover:text-blue-300 transition-colors`}>Terms & Privacy</a>
+          </div>
+        </footer>
+      </div>
+    </ThemeContext.Provider>
   );
 };
 
