@@ -1,6 +1,6 @@
-// app.js - Final Working React App for CDN Environment (Day 16: Mock Claim Verifier)
+// app.js - Final Working React App for CDN Environment (Day 20: Project Conclusion)
 
-// --- THEME CONFIGURATION ---
+// --- THEME CONFIGURATION (unchanged) ---
 const THEME_CONFIG = {
   name: 'light',
   colors: {
@@ -27,23 +27,24 @@ const DARK_THEME_CONFIG = {
   }
 };
 
-// --- Theme Context Setup ---
+// --- Theme Context Setup (unchanged) ---
 const ThemeContext = React.createContext(THEME_CONFIG.colors);
 const useTheme = () => React.useContext(ThemeContext);
 
 
-// --- MOCK API DATA (UPDATED for Day 16) ---
-const MOCK_PROFILE_DATA = {
+// --- MOCK API DATA (unchanged) ---
+const MOCK_PROFILE_DATA_BASE = {
   name: "Jane Doe (React Dev)",
   title: "Senior Software Architect",
   memberSince: "July 2024",
-  trustScore: 9.2,
   lastVetted: "2025-10-21",
-  claims: [
+};
+
+const MOCK_INITIAL_CLAIMS = [
     { id: 1, text: "Certified AWS Solutions Architect (2023)", status: "VERIFIED" },
     { id: 2, text: "Led Microservices Migration Project (3 years experience)", status: "PENDING" },
-  ]
-};
+    { id: 3, text: "Contributed to Linux Kernel (2022)", status: "REJECTED" },
+];
 
 const MOCK_SEARCH_RESULTS = [
     { id: 101, name: "Michael Johnson", title: "DevOps Engineer", score: 9.6, skills: ["Kubernetes", "Terraform", "AWS"], verificationSource: "CNCF" },
@@ -51,22 +52,29 @@ const MOCK_SEARCH_RESULTS = [
     { id: 103, name: "Alex Vlasov", title: "Cybersecurity Analyst", score: 8.5, skills: ["CISSP", "Penetration Testing", "SIEM"], verificationSource: "ISC²" },
 ];
 
-// 🚨 Day 16: New Mock Data for the Verifier Queue
-const MOCK_VERIFICATION_QUEUE = [
-    { id: 201, claimant: "Jane Doe", claimText: "Successfully deployed serverless authentication flow using Cognito.", proofUrl: "https://github.com/janedoe/auth-project-v2", submitted: "2 hours ago" },
-    { id: 202, claimant: "John Smith", claimText: "Completed 'Advanced Data Structures' course from Coursera.", proofUrl: "https://coursera.org/cert/johnsmith123", submitted: "1 day ago" },
-    { id: 203, claimant: "Pat Lee", claimText: "Wrote a custom Kubernetes operator in Go.", proofUrl: "https://github.com/patlee/k8s-operator", submitted: "2 days ago" },
+const MOCK_API_KEYS = [
+    { id: 1, name: "Recruiter Search API", key: "tt-rec-ab1c-d2e3-f4g5", active: true, usage: 1240, limit: 5000 },
+    { id: 2, name: "Automated Vetting Hook", key: "tt-vet-h6i7-j8k9-l0m1", active: false, usage: 0, limit: 10000 },
+];
+
+// --- ROADMAP DATA (Day 20) ---
+const PROJECT_MODULES = [
+    { id: 'm1', name: 'M1: Professional & Recruiter UX', status: 'Complete', date: 'Day 10', description: 'Built the core profile and search dashboards.' },
+    { id: 'm2', name: 'M2: Centralized State & Auth', status: 'Complete', date: 'Day 15', description: 'Implemented the global state management system and user authentication.' },
+    { id: 'm3', name: 'M3: AI & Verification Loop', status: 'Complete', date: 'Day 18', description: 'Established claim submission, verifier console, and score updates.' },
+    { id: 'm4', name: 'M4: Enterprise API Service', status: 'Complete', date: 'Day 19', description: 'Mocked the API Key Management dashboard for enterprise integration.' },
 ];
 
 
 // ====================================================================
-// 1. Header Component
+// 1. Header Component (Updated for new nav item)
 // ====================================================================
 
 const Header = ({ currentView, setView, toggleTheme, themeMode }) => {
   const { primary, secondary, textOnPrimary } = useTheme(); 
-  const isLoggedIn = currentView !== 'login'; 
+  const isLoggedIn = currentView !== 'login' && currentView !== 'roadmap'; 
   const isVerifier = currentView === 'verifier';
+  const isRecruiter = currentView === 'recruiter' || currentView === 'api'; 
 
   const handleLogout = () => {
     localStorage.clear(); 
@@ -78,12 +86,22 @@ const Header = ({ currentView, setView, toggleTheme, themeMode }) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
         <div className="text-2xl font-bold tracking-wider">TechTrust</div>
         <nav className="space-x-6 hidden sm:flex">
-          <a href="#" onClick={() => setView('profile')} className="font-medium hover:text-blue-300 transition-colors">Profile</a>
-          <a href="#" onClick={() => setView('recruiter')} className="font-medium hover:text-blue-300 transition-colors">Job Board</a>
-          {/* 🚨 Day 16: Verifier Link */}
-          {isVerifier && 
-            <a href="#" onClick={() => setView('verifier')} className="font-medium text-yellow-300 hover:text-yellow-100 transition-colors">Verifier Console</a>
-          }
+          {/* 🚨 Day 20: New Roadmap link */}
+          <a href="#" onClick={() => setView('roadmap')} className="font-medium hover:text-blue-300 transition-colors">Roadmap</a>
+          
+          {isLoggedIn && (
+            <>
+              <a href="#" onClick={() => setView('profile')} className="font-medium hover:text-blue-300 transition-colors">Profile</a>
+              <a href="#" onClick={() => setView('recruiter')} className="font-medium hover:text-blue-300 transition-colors">Job Board</a>
+              
+              {isVerifier && 
+                <a href="#" onClick={() => setView('verifier')} className="font-medium text-yellow-300 hover:text-yellow-100 transition-colors">Verifier Console</a>
+              }
+              {isRecruiter &&
+                <a href="#" onClick={() => setView('api')} className="font-medium text-purple-300 hover:text-purple-100 transition-colors">API Management</a>
+              }
+            </>
+          )}
         </nav>
         
         <div className="flex items-center space-x-4">
@@ -104,14 +122,13 @@ const Header = ({ currentView, setView, toggleTheme, themeMode }) => {
 };
 
 // ====================================================================
-// 2. Authentication View (Updated for Verifier)
+// 2. Authentication View (unchanged)
 // ====================================================================
 
 const AuthView = ({ setView }) => {
   const { primary, secondary, textOnSecondary, neutralBg } = useTheme(); 
   const [isLogin, setIsLogin] = React.useState(true);
   
-  // 🚨 Day 16: Added Verifier Type
   const [userType, setUserType] = React.useState('professional');
 
   const handleAuth = (e, type) => {
@@ -162,9 +179,7 @@ const AuthView = ({ setView }) => {
       <form onSubmit={(e) => handleAuth(e, isLogin ? 'login' : 'register')} className="space-y-4">
         <h2 className="text-2xl font-bold text-gray-800">{isLogin ? 'Welcome Back' : 'Create Account'}</h2>
         {!isLogin && (
-            // Registration fields (unchanged)
-            // ...
-            <input type="hidden" name="user_type" value="professional" /> // Simple registration defaults to professional
+            <input type="hidden" name="user_type" value="professional" /> 
         )}
 
         {isLogin && (
@@ -197,7 +212,6 @@ const AuthView = ({ setView }) => {
           <input type="password" id={`${isLogin ? 'login' : 'register'}-password`} name="password" className={`mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-[${secondary}] focus:border-[${secondary}]`} required />
         </div>
         
-        {/* Simplified registration to default to professional, login handles type selection */}
         {!isLogin && (
              <div className="flex space-x-4">
               <label className="inline-flex items-center">
@@ -237,27 +251,18 @@ const AddClaimModal = ({ isOpen, onClose, onClaimSubmitted }) => {
         const form = e.target.closest('form');
         const formData = new FormData(form);
         const title = formData.get('claim-title');
-        const details = formData.get('claim-details');
         
-        const claimPayload = {
-            claim: title,
-            details: details,
-            user_id: 123, 
-            submission_date: new Date().toISOString()
-        };
-
         try {
+            // Mock API call delay
             await new Promise(resolve => setTimeout(resolve, 2000));
             
             const isMockSuccess = Math.random() > 0.1;
 
             if (isMockSuccess) {
-                console.log('Claim submission successful:', claimPayload);
+                onClaimSubmitted(title); 
+
                 alert("✅ Claim Submitted! It is now PENDING verification by M3's AI.");
                 
-                if (onClaimSubmitted) {
-                    onClaimSubmitted(claimPayload);
-                }
             } else {
                 throw new Error("API Error: Claim too vague or failed initial validation.");
             }
@@ -333,51 +338,60 @@ const AddClaimModal = ({ isOpen, onClose, onClaimSubmitted }) => {
 
 
 // ====================================================================
-// 4. Profile View (unchanged)
+// 4. Profile View (unchanged from Day 18)
 // ====================================================================
 
-const ProfileView = () => {
+const ProfileView = ({ claims, trustScore, newlyVerifiedId, onClaimSubmitted, onClaimAction, onAlertDismissed }) => {
   const { primary, secondary, success, neutralBg } = useTheme(); 
   const [profile, setProfile] = React.useState(null);
-  const [claims, setClaims] = React.useState([]); 
   const [loading, setLoading] = React.useState(true);
   const [isModalOpen, setIsModalOpen] = React.useState(false); 
+  
+  // State for the temporary success alert
+  const [showAlert, setShowAlert] = React.useState(false);
+  const newlyVerifiedClaim = claims.find(c => c.id === newlyVerifiedId);
 
+
+  // Fetch static profile data (name, etc.) once
   React.useEffect(() => {
     const fetchProfileData = () => {
       setLoading(true);
       return new Promise(resolve => {
         setTimeout(() => {
-          resolve(MOCK_PROFILE_DATA); 
+          resolve(MOCK_PROFILE_DATA_BASE); 
         }, 1000); 
       });
     };
 
     fetchProfileData().then(data => {
       setProfile(data);
-      setClaims(data.claims); 
       setLoading(false);
     });
   }, []);
-
-  const handleClaimSubmitted = (newClaim) => {
-      const newMockClaim = {
-          id: Date.now(),
-          text: newClaim.claim,
-          status: 'PENDING'
-      };
-      setClaims(prevClaims => [newMockClaim, ...prevClaims]);
-  };
-
-  const handleClaimAction = (claimId, action) => {
-    if (action === 'delete') {
-      if (window.confirm("Are you sure you want to delete this claim? This action cannot be undone.")) {
-        setClaims(prevClaims => prevClaims.filter(c => c.id !== claimId));
-        alert('Claim successfully deleted.');
+  
+  // Show alert when a claim is verified
+  React.useEffect(() => {
+      if (newlyVerifiedId && newlyVerifiedClaim) {
+          setShowAlert(true);
+          // Auto-dismiss the alert after 8 seconds
+          const timer = setTimeout(() => {
+              handleDismiss();
+          }, 8000); 
+          return () => clearTimeout(timer);
       }
-    } else if (action === 'edit') {
-      alert(`Editing Claim ID ${claimId}: Functionality mocked. A real app would open an Edit Modal here.`);
+  }, [newlyVerifiedId]);
+
+
+  const handleDeleteClaim = (claimId) => {
+    if (window.confirm("Are you sure you want to delete this claim? This action cannot be undone.")) {
+      onClaimAction(claimId); // Call the centralized removeClaim function
+      alert('Claim successfully deleted.');
     }
+  };
+  
+  const handleDismiss = () => {
+      setShowAlert(false);
+      onAlertDismissed(); // Call the central function to clear the ID
   };
 
 
@@ -391,12 +405,30 @@ const ProfileView = () => {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 w-full">
+      
+      {/* Verification Success Alert (Conditional) */}
+      {showAlert && newlyVerifiedClaim && (
+          <div className="lg:col-span-3 bg-green-50 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-md flex justify-between items-center mb-4">
+              <div className='flex items-center space-x-3'>
+                <span className="text-2xl">🎉</span>
+                <p className="font-bold">
+                    Claim Verified! 
+                    <span className="font-normal block text-sm">"{newlyVerifiedClaim.text}" was successfully verified. Your Trust Score has been updated!</span>
+                </p>
+              </div>
+              <button onClick={handleDismiss} className="text-green-700 hover:text-green-900 font-bold text-lg">
+                  &times;
+              </button>
+          </div>
+      )}
+
       {/* LEFT COLUMN */}
       <div className="lg:col-span-1 space-y-6">
         <div className={`bg-[${neutralBg}] p-6 rounded-lg shadow-xl border-t-4 border-[${success}]`}>
           <h3 className="text-xl font-bold text-gray-800 mb-4">Verification Status</h3>
           <div className="text-center">
-            <p className={`text-6xl font-extrabold text-[${primary}]`}>{profile.trustScore.toFixed(1)}</p>
+            {/* Dynamic Trust Score */}
+            <p className={`text-6xl font-extrabold text-[${primary}]`}>{trustScore.toFixed(1)}</p>
             <p className={`text-lg font-semibold text-[${success}] mt-1`}>AI Trust Score</p>
             <p className="text-sm text-gray-500 mt-2">Last Vetted: {profile.lastVetted}</p>
           </div>
@@ -431,8 +463,10 @@ const ProfileView = () => {
               {/* Left side: Text and Status */}
               <div className="flex-grow pr-4"> 
                 <p className="font-semibold text-lg text-gray-700">{claim.text}</p>
+                {/* Status Tag */}
                 <span className={`text-xs font-semibold px-3 py-1 rounded-full mt-1 inline-block 
-                  ${claim.status === 'VERIFIED' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                  ${claim.status === 'VERIFIED' ? 'bg-green-100 text-green-800' : 
+                    claim.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>
                   {claim.status}
                 </span>
               </div>
@@ -440,14 +474,14 @@ const ProfileView = () => {
               {/* Right side: Action Buttons */}
               <div className="flex space-x-3 text-sm pt-1">
                 <button 
-                  onClick={() => handleClaimAction(claim.id, 'edit')}
+                  onClick={() => alert(`Editing Claim ID ${claim.id}: Functionality mocked.`)}
                   className="text-gray-500 hover:text-blue-600 transition-colors"
                   title="Edit Claim"
                 >
                   Edit
                 </button>
                 <button 
-                  onClick={() => handleClaimAction(claim.id, 'delete')}
+                  onClick={() => handleDeleteClaim(claim.id)}
                   className="text-red-500 hover:text-red-700 transition-colors"
                   title="Delete Claim"
                 >
@@ -462,7 +496,7 @@ const ProfileView = () => {
       <AddClaimModal 
           isOpen={isModalOpen} 
           onClose={() => setIsModalOpen(false)} 
-          onClaimSubmitted={handleClaimSubmitted}
+          onClaimSubmitted={onClaimSubmitted}
       />
     </div>
   );
@@ -590,7 +624,6 @@ const RecruiterView = () => {
                                     <div className="flex-1">
                                         <p className={`text-xl font-semibold text-[${primary}]`}>{candidate.name}</p>
                                         
-                                        {/* Day 15: Verification Source Tag */}
                                         <div className="mt-1 flex items-center space-x-3">
                                             <p className="text-gray-600">{candidate.title}</p>
                                             <span className={`text-xs font-semibold px-2 py-0.5 rounded-full inline-block bg-indigo-100 text-indigo-800`}>
@@ -622,17 +655,22 @@ const RecruiterView = () => {
 };
 
 // ====================================================================
-// 6. Verifier View (NEW for Day 16)
+// 6. Verifier View (unchanged)
 // ====================================================================
 
-const VerifierView = () => {
+const VerifierView = ({ allClaims, updateClaimStatus }) => {
     const { primary, success, secondary, neutralBg } = useTheme();
-    const [queue, setQueue] = React.useState(MOCK_VERIFICATION_QUEUE);
+    
+    // Calculate the queue by filtering the global claims list
+    const queue = allClaims.filter(c => c.status === 'PENDING');
 
     const handleVerification = (claimId, result) => {
-        setQueue(prevQueue => prevQueue.filter(claim => claim.id !== claimId));
+        const newStatus = result === 'approve' ? 'VERIFIED' : 'REJECTED';
+        const shouldUpdateScore = newStatus === 'VERIFIED'; // Only update score on approval
+        
+        updateClaimStatus(claimId, newStatus, shouldUpdateScore); 
 
-        if (result === 'approve') {
+        if (newStatus === 'VERIFIED') {
             alert(`✅ Claim ${claimId} Approved! Trust Score updated for claimant.`);
         } else {
             alert(`❌ Claim ${claimId} Rejected! Claimant will be notified.`);
@@ -655,13 +693,13 @@ const VerifierView = () => {
                             <div className="flex justify-between items-start mb-3">
                                 <div>
                                     <p className="text-sm font-semibold text-gray-500">CLAIM ID: {claim.id}</p>
-                                    <p className={`text-xl font-bold text-gray-800 mt-1`}>{claim.claimText}</p>
-                                    <p className="text-gray-600 mt-1">Claimant: <span className="font-semibold text-[${primary}]">{claim.claimant}</span></p>
+                                    <p className={`text-xl font-bold text-gray-800 mt-1`}>{claim.text}</p>
+                                    <p className="text-gray-600 mt-1">Claimant: <span className="font-semibold text-[${primary}]">Jane Doe</span></p>
                                 </div>
                                 <span className="text-sm text-yellow-600 font-medium bg-yellow-100 px-3 py-1 rounded-full">PENDING REVIEW</span>
                             </div>
                             
-                            <p className="text-sm text-gray-700 mt-2">Proof/Details: <a href={claim.proofUrl} target="_blank" className={`text-[${secondary}] hover:underline`}>{claim.proofUrl.length > 50 ? claim.proofUrl.substring(0, 50) + '...' : claim.proofUrl}</a></p>
+                            <p className="text-sm text-gray-700 mt-2">Proof/Details: *Details sent to AI for review*</p>
 
                             <div className="flex justify-end space-x-3 mt-4 pt-4 border-t border-gray-200">
                                 <button
@@ -685,14 +723,205 @@ const VerifierView = () => {
     );
 };
 
+// ====================================================================
+// 7. Enterprise API View (unchanged)
+// ====================================================================
+const EnterpriseAPIView = () => {
+    const { primary, secondary, neutralBg } = useTheme(); 
+    const [apiKeys, setApiKeys] = React.useState(MOCK_API_KEYS);
+    
+    const toggleKeyStatus = (keyId) => {
+        setApiKeys(prevKeys => prevKeys.map(key => 
+            key.id === keyId ? { ...key, active: !key.active } : key
+        ));
+    };
+    
+    const generateNewKey = () => {
+        alert('New API Key Generated! (Mock Functionality)');
+        const newKey = {
+            id: Date.now(),
+            name: "New Custom Integration Key",
+            key: "tt-new-" + Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 6),
+            active: true,
+            usage: 0,
+            limit: 1000,
+        };
+        setApiKeys(prevKeys => [...prevKeys, newKey]);
+    };
+
+    return (
+        <div className="w-full max-w-6xl">
+            <h1 className={`text-3xl font-bold text-[${primary}] mb-6`}>M4: Enterprise API Management</h1>
+            <p className="text-lg text-gray-600 mb-8">Manage API keys and integration limits for seamless access to the TechTrust Verification and Search services.</p>
+
+            <div className={`bg-[${neutralBg}] p-6 rounded-lg shadow-xl border border-gray-200`}>
+                <div className="flex justify-between items-center mb-4 border-b pb-4">
+                    <h3 className="text-2xl font-bold text-gray-800">Your Active API Keys</h3>
+                    <button 
+                        onClick={generateNewKey}
+                        className={`px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-md hover:bg-purple-700 transition-colors`}
+                    >
+                        + Generate New Key
+                    </button>
+                </div>
+                
+                <div className="space-y-4">
+                    {apiKeys.map(key => (
+                        <div key={key.id} className="p-4 border rounded-lg flex items-center justify-between hover:bg-gray-50">
+                            <div className="flex-1 min-w-0 pr-4">
+                                <p className="text-lg font-semibold text-gray-800">{key.name}</p>
+                                <div className="flex items-center space-x-3 mt-1">
+                                    <code className={`text-sm font-mono p-1 rounded ${key.active ? 'bg-gray-200 text-gray-700' : 'bg-red-100 text-red-700'}`}>
+                                        {key.key}
+                                    </code>
+                                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${key.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                        {key.active ? 'Active' : 'Revoked'}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div className="text-sm text-right w-40">
+                                <p className="font-semibold text-gray-700">{key.usage} / {key.limit}</p>
+                                <p className="text-gray-500">Requests Used</p>
+                            </div>
+                            
+                            <button
+                                onClick={() => toggleKeyStatus(key.id)}
+                                className={`ml-6 px-4 py-2 text-sm font-medium rounded-md transition-colors 
+                                    ${key.active ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-green-500 text-white hover:bg-green-600'}`}
+                            >
+                                {key.active ? 'Revoke' : 'Activate'}
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+};
 
 // ====================================================================
-// 7. App Component (The Main Router) - Updated for Verifier View
+// 8. NEW: Project Roadmap View (Day 20)
+// ====================================================================
+
+const RoadmapView = ({ setView }) => {
+    const { primary, secondary, success, neutralBg } = useTheme(); 
+
+    const handleLoginClick = (userType) => {
+        // Mock setting local storage to redirect after login
+        localStorage.setItem('techtust_user_type', userType);
+        localStorage.setItem('techtust_token', 'mock-jwt-token');
+        setView(userType);
+        alert(`Logged in as ${userType.charAt(0).toUpperCase() + userType.slice(1)}!`);
+    };
+
+    return (
+        <div className="w-full max-w-6xl">
+            <h1 className={`text-4xl font-extrabold text-[${primary}] mb-2`}>TechTrust Project Completion</h1>
+            <p className="text-xl text-gray-600 mb-10">All four core modules have been designed and mocked.</p>
+
+            <div className={`bg-[${neutralBg}] p-8 rounded-lg shadow-2xl border-t-8 border-[${secondary}]`}>
+                
+                <h2 className={`text-3xl font-bold text-gray-800 mb-6 flex items-center`}>
+                    Project Milestones (4/4 Complete) <span className={`ml-3 text-3xl text-[${success}]`}>✅</span>
+                </h2>
+
+                <div className="space-y-6">
+                    {PROJECT_MODULES.map(module => (
+                        <div key={module.id} className="p-4 rounded-lg bg-green-50 border-l-4 border-green-500 flex justify-between items-center">
+                            <div className="flex-1 min-w-0">
+                                <p className="text-xl font-semibold text-green-800">{module.name}</p>
+                                <p className="text-sm text-gray-600 mt-1">{module.description}</p>
+                            </div>
+                            <div className="text-right ml-4">
+                                <span className={`text-sm font-bold text-white px-3 py-1 rounded-full bg-[${success}]`}>
+                                    {module.status}
+                                </span>
+                                <p className="text-xs text-gray-500 mt-1">Completed: {module.date}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+            
+            <h2 className={`text-2xl font-bold text-gray-800 mt-10 mb-5`}>Launch the Demo App</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <button
+                    onClick={() => handleLoginClick('profile')}
+                    className={`p-6 bg-[${primary}] text-white rounded-lg shadow-lg hover:bg-indigo-900 transition-transform transform hover:scale-[1.02]`}
+                >
+                    <p className="text-xl font-bold">Tech Professional (Jane Doe)</p>
+                    <p className="text-sm opacity-80 mt-1">View Profile, Claims & Score</p>
+                </button>
+                <button
+                    onClick={() => handleLoginClick('recruiter')}
+                    className={`p-6 bg-[${secondary}] text-[${primary}] rounded-lg shadow-lg hover:bg-blue-300 transition-transform transform hover:scale-[1.02]`}
+                >
+                    <p className="text-xl font-bold">Enterprise Recruiter</p>
+                    <p className="text-sm opacity-90 mt-1">Search Candidates & Manage API</p>
+                </button>
+                <button
+                    onClick={() => handleLoginClick('verifier')}
+                    className={`p-6 bg-yellow-500 text-white rounded-lg shadow-lg hover:bg-yellow-600 transition-transform transform hover:scale-[1.02]`}
+                >
+                    <p className="text-xl font-bold">M3 Verifier Console</p>
+                    <p className="text-sm opacity-90 mt-1">Review Pending Vetting Claims</p>
+                </button>
+            </div>
+            
+            <p className="text-center text-sm text-gray-500 mt-6">
+                Or, click "Sign In" in the header to access the full login/registration page.
+            </p>
+            
+        </div>
+    );
+};
+
+
+// ====================================================================
+// 9. App Component (The Main Router) - Final Update
 // ====================================================================
 
 const App = () => {
-  const [currentView, setCurrentView] = React.useState('login'); 
+  // 🚨 Day 20: Changed initial view to 'roadmap' unless a token/user type exists
+  const [currentView, setCurrentView] = React.useState('roadmap'); 
   const [themeMode, setThemeMode] = React.useState('light'); 
+  
+  // Central State Management (Trust Score & Claims)
+  const [trustScore, setTrustScore] = React.useState(9.2); 
+  const [newlyVerifiedId, setNewlyVerifiedId] = React.useState(null); 
+  const [allClaims, setAllClaims] = React.useState(MOCK_INITIAL_CLAIMS); 
+  
+  // --- State Manipulation Functions (unchanged) ---
+  const updateClaimStatus = React.useCallback((claimId, newStatus, shouldUpdateScore) => {
+      setAllClaims(prevClaims => prevClaims.map(claim =>
+          claim.id === claimId ? { ...claim, status: newStatus } : claim
+      ));
+
+      if (shouldUpdateScore) {
+          setTrustScore(prevScore => Math.min(10.0, prevScore + 0.1)); 
+          setNewlyVerifiedId(claimId);
+      }
+  }, []);
+
+  const addClaim = React.useCallback((newClaimText) => {
+      const newMockClaim = {
+          id: Date.now(),
+          text: newClaimText,
+          status: 'PENDING'
+      };
+      setAllClaims(prevClaims => [newMockClaim, ...prevClaims]); 
+  }, []);
+
+  const removeClaim = React.useCallback((claimId) => {
+      setAllClaims(prevClaims => prevClaims.filter(c => c.id !== claimId));
+  }, []);
+  
+  const handleAlertDismissed = React.useCallback(() => {
+      setNewlyVerifiedId(null);
+  }, []);
+  // ------------------------------------
+
 
   const toggleTheme = () => {
     setThemeMode(prevMode => prevMode === 'light' ? 'dark' : 'light');
@@ -704,10 +933,12 @@ const App = () => {
   React.useEffect(() => {
     const userType = localStorage.getItem('techtust_user_type');
     const token = localStorage.getItem('techtust_token');
+    
+    // 🚨 Day 20: If logged in, go to user type view. Otherwise, show roadmap.
     if (token && userType) {
-      setCurrentView(userType); // Use stored userType directly as the view name
+      setCurrentView(userType); 
     } else {
-      setCurrentView('login');
+      setCurrentView('roadmap');
     }
   }, []);
 
@@ -716,26 +947,37 @@ const App = () => {
 
   // Simple Router Logic
   switch (currentView) {
+    case 'roadmap':
+        content = <RoadmapView setView={setCurrentView} />;
+        break;
     case 'login':
       content = <AuthView setView={setCurrentView} />;
       break;
     case 'profile':
-      content = <ProfileView />;
+      content = <ProfileView 
+        claims={allClaims} 
+        trustScore={trustScore}
+        newlyVerifiedId={newlyVerifiedId}
+        onClaimSubmitted={addClaim} 
+        onClaimAction={removeClaim}
+        onAlertDismissed={handleAlertDismissed}
+      />;
       break;
     case 'recruiter':
       content = <RecruiterView />;
       break;
-    // 🚨 Day 16: New Verifier Route
     case 'verifier':
-        content = <VerifierView />;
+        content = <VerifierView allClaims={allClaims} updateClaimStatus={updateClaimStatus} />;
+        break;
+    case 'api':
+        content = <EnterpriseAPIView />;
         break;
     default:
-      content = <AuthView setView={setCurrentView} />;
+      content = <RoadmapView setView={setCurrentView} />;
   }
 
   return (
     <ThemeContext.Provider value={activeTheme.colors}>
-      {/* Set the main application background based on theme mode */}
       <div className={`min-h-screen flex flex-col ${themeMode === 'dark' ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-800'}`}>
         <Header 
             currentView={currentView} 
@@ -745,13 +987,11 @@ const App = () => {
         />
         
         <main className={mainClass + " flex"}>
-          {/* Center content horizontally and vertically only for AuthView */}
-          <div className={`w-full h-full flex ${currentView === 'login' ? 'items-center justify-center' : 'items-start justify-center'}`}>
+          <div className={`w-full h-full flex ${currentView === 'login' || currentView === 'roadmap' ? 'items-center justify-center' : 'items-start justify-center'}`}>
             {content}
           </div>
         </main>
 
-        {/* Footer Component */}
         <footer className="bg-gray-800 text-white mt-auto">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 text-center text-sm">
             &copy; 2025 TechTrust. All rights reserved. | 
@@ -764,7 +1004,7 @@ const App = () => {
 };
 
 // ====================================================================
-// 8. REACT MOUNTING LOGIC (Browser Entry Point)
+// 10. REACT MOUNTING LOGIC (Browser Entry Point)
 // ====================================================================
 
 const rootElement = document.getElementById('root');
