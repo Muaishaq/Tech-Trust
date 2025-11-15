@@ -1,4 +1,4 @@
-// app.js - Final Working React App for CDN Environment (Day 20: Project Conclusion)
+// app.js - Final Working React App for CDN Environment (Day 20: Project Refactor - Auth Step 3: API Integration)
 
 // --- THEME CONFIGURATION (unchanged) ---
 const THEME_CONFIG = {
@@ -32,7 +32,15 @@ const ThemeContext = React.createContext(THEME_CONFIG.colors);
 const useTheme = () => React.useContext(ThemeContext);
 
 
-// --- MOCK API DATA (unchanged) ---
+// ====================================================================
+// --- API & MOCK DATA (UPDATED FOR REAL API CALLS) ---
+// ====================================================================
+
+// 🚨 CRITICAL: REPLACE 'http://localhost:5000/api/auth' with your actual backend URL.
+// The user's application must be served from the same domain or have correct CORS settings.
+const API_BASE_URL = 'http://localhost:5000/api/auth'; 
+const MIN_PASS_LENGTH = 8; // Client-side validation constant
+
 const MOCK_PROFILE_DATA_BASE = {
   name: "Jane Doe (React Dev)",
   title: "Senior Software Architect",
@@ -49,36 +57,105 @@ const MOCK_INITIAL_CLAIMS = [
 const MOCK_SEARCH_RESULTS = [
     { id: 101, name: "Michael Johnson", title: "DevOps Engineer", score: 9.6, skills: ["Kubernetes", "Terraform", "AWS"], verificationSource: "CNCF" },
     { id: 102, name: "Sarah Chen", title: "Senior Data Scientist", score: 8.9, skills: ["Python", "TensorFlow", "Spark"], verificationSource: "Project A-Z" },
-    { id: 103, name: "Alex Vlasov", title: "Cybersecurity Analyst", score: 8.5, skills: ["CISSP", "Penetration Testing", "SIEM"], verificationSource: "ISC²" },
 ];
 
 const MOCK_API_KEYS = [
     { id: 1, name: "Recruiter Search API", key: "tt-rec-ab1c-d2e3-f4g5", active: true, usage: 1240, limit: 5000 },
-    { id: 2, name: "Automated Vetting Hook", key: "tt-vet-h6i7-j8k9-l0m1", active: false, usage: 0, limit: 10000 },
 ];
 
-// --- ROADMAP DATA (Day 20) ---
-const PROJECT_MODULES = [
-    { id: 'm1', name: 'M1: Professional & Recruiter UX', status: 'Complete', date: 'Day 10', description: 'Built the core profile and search dashboards.' },
-    { id: 'm2', name: 'M2: Centralized State & Auth', status: 'Complete', date: 'Day 15', description: 'Implemented the global state management system and user authentication.' },
-    { id: 'm3', name: 'M3: AI & Verification Loop', status: 'Complete', date: 'Day 18', description: 'Established claim submission, verifier console, and score updates.' },
-    { id: 'm4', name: 'M4: Enterprise API Service', status: 'Complete', date: 'Day 19', description: 'Mocked the API Key Management dashboard for enterprise integration.' },
-];
+// --- REAL API HANDLERS ---
+
+const apiRegister = async (name, email, password, userType) => {
+    try {
+        const response = await fetch(`${API_BASE_URL}/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, email, password, userType })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            return { success: true, message: data.message || "Registration successful!" };
+        } else {
+            // Assumes backend returns { message: "Error details" }
+            return { success: false, error: data.message || "Registration failed. Check server logs." };
+        }
+    } catch (error) {
+        console.error("Registration Fetch Error:", error);
+        return { success: false, error: "Network error. Is the backend running and CORS configured?" };
+    }
+};
+
+const apiLogin = async (email, password) => {
+    try {
+        const response = await fetch(`${API_BASE_URL}/login`, {
+            method: 'POST',
+            // CRITICAL for JWT Cookies: Tells the browser to include credentials (cookies)
+            credentials: 'include', 
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            // Assumes backend successfully set HTTP-only cookie and returned user object
+            return { 
+                success: true, 
+                // Assumes response body has a 'user' object with the 'userType' field
+                // Ensure your Node.js login endpoint sends back: { user: { userType: 'profile' | 'recruiter' } }
+                user_type: data.user.userType, 
+            };
+        } else {
+            return { success: false, error: data.message || "Invalid email or password." };
+        }
+    } catch (error) {
+        console.error("Login Fetch Error:", error);
+        return { success: false, error: "Network error. Is the backend running?" };
+    }
+};
+
+const apiLogout = async () => {
+    try {
+        // Calls backend to clear the HTTP-only cookie
+        await fetch(`${API_BASE_URL}/logout`, {
+            method: 'POST',
+            credentials: 'include', 
+        });
+        // Frontend treats this as success, as the primary action is clearing local state.
+        return true; 
+    } catch (error) {
+        console.error("Logout Fetch Error:", error);
+        return false;
+    }
+}
 
 
 // ====================================================================
-// 1. Header Component (Updated for new nav item)
+// 1. Header Component (Updated: Logout calls real API)
 // ====================================================================
 
 const Header = ({ currentView, setView, toggleTheme, themeMode }) => {
   const { primary, secondary, textOnPrimary } = useTheme(); 
-  const isLoggedIn = currentView !== 'login' && currentView !== 'roadmap'; 
-  const isVerifier = currentView === 'verifier';
+  // Logged in if not on the 'login' page
+  const isLoggedIn = currentView !== 'login'; 
+  const isVerifier = currentView === 'verifier'; 
   const isRecruiter = currentView === 'recruiter' || currentView === 'api'; 
 
-  const handleLogout = () => {
-    localStorage.clear(); 
-    setView('login');
+  // MOCK LOGOUT: Clears user session and redirects to login
+  const handleLogout = async () => {
+    const success = await apiLogout();
+    if(success) {
+        // Clear only local storage data used for routing/name display
+        localStorage.clear(); 
+        setView('login');
+        alert('You have been successfully logged out.');
+    } else {
+        alert('Logout failed (network error). Trying to reset local state...');
+        localStorage.clear(); 
+        setView('login');
+    }
   };
 
   return (
@@ -86,12 +163,13 @@ const Header = ({ currentView, setView, toggleTheme, themeMode }) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
         <div className="text-2xl font-bold tracking-wider">TechTrust</div>
         <nav className="space-x-6 hidden sm:flex">
-          {/* 🚨 Day 20: New Roadmap link */}
-          <a href="#" onClick={() => setView('roadmap')} className="font-medium hover:text-blue-300 transition-colors">Roadmap</a>
           
           {isLoggedIn && (
             <>
+              {/* Profile is for Tech Professional */}
               <a href="#" onClick={() => setView('profile')} className="font-medium hover:text-blue-300 transition-colors">Profile</a>
+              
+              {/* Job Board/Recruiter View */}
               <a href="#" onClick={() => setView('recruiter')} className="font-medium hover:text-blue-300 transition-colors">Job Board</a>
               
               {isVerifier && 
@@ -122,48 +200,147 @@ const Header = ({ currentView, setView, toggleTheme, themeMode }) => {
 };
 
 // ====================================================================
-// 2. Authentication View (unchanged)
+// 2. Authentication View (Updated: Uses real API handlers)
 // ====================================================================
 
 const AuthView = ({ setView }) => {
   const { primary, secondary, textOnSecondary, neutralBg } = useTheme(); 
   const [isLogin, setIsLogin] = React.useState(true);
   
-  const [userType, setUserType] = React.useState('professional');
+  // --- Core Authentication Handlers (register, login) ---
 
-  const handleAuth = (e, type) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     const form = e.target.closest('form');
     const formData = new FormData(form);
-    const data = Object.fromEntries(formData.entries());
+    const { email, password } = Object.fromEntries(formData.entries());
 
-    if (!data.email || !data.password) {
+    if (!email || !password) {
         alert('Please fill in required fields.');
         return;
     }
-
-    const finalUserType = isLogin ? userType : (data.user_type || 'professional');
     
-    localStorage.setItem('techtust_user_type', finalUserType); 
-    localStorage.setItem('techtust_token', 'mock-jwt-token');
-
-    if (type === 'register') {
-        alert(`Registration successful! Account type: ${finalUserType}. Please log in.`);
-        setIsLogin(true); 
+    // Client-Side Validation: Password Length
+    if (password.length < MIN_PASS_LENGTH) {
+        alert(`Password must be at least ${MIN_PASS_LENGTH} characters long.`);
         return;
     }
 
-    alert(`Login successful as a ${finalUserType}!`);
+    // 🚨 Calling real API
+    const result = await apiLogin(email, password); 
+    
+    if (result.success) {
+        const finalUserType = result.user_type; 
+        
+        // Store user type for front-end routing (JWT is handled by the cookie)
+        localStorage.setItem('techtust_user_type', finalUserType); 
 
-    // Route to correct view
-    if (finalUserType === 'recruiter') {
-      setView('recruiter');
-    } else if (finalUserType === 'verifier') {
-      setView('verifier');
+        alert(`Login successful! Redirecting you as a ${finalUserType === 'profile' ? 'Tech Professional' : 'Recruiter'}.`);
+
+        // Route based on the user_type returned by the API
+        setView(finalUserType);
     } else {
-      setView('profile');
+        alert(`❌ Login Failed: ${result.error}`);
     }
   };
+
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    const form = e.target.closest('form');
+    const formData = new FormData(form);
+    const { name, email, password, user_type } = Object.fromEntries(formData.entries());
+    const finalUserType = user_type;
+
+    if (!name || !email || !password || !finalUserType) {
+        alert('Please fill in all required fields.');
+        return;
+    }
+
+    // Client-Side Validation: Password Length
+    if (password.length < MIN_PASS_LENGTH) {
+        alert(`Password must be at least ${MIN_PASS_LENGTH} characters long.`);
+        return;
+    }
+    
+    // 🚨 Calling real API
+    const result = await apiRegister(name, email, password, finalUserType);
+    
+    if (result.success) {
+        alert(`✅ Registration successful! Please log in.`);
+        // After successful registration, switch to the login view
+        setIsLogin(true); 
+    } else {
+        alert(`❌ Registration Failed: ${result.error}`);
+    }
+  };
+  
+  // --- Render Logic ---
+
+  const renderAuthForm = () => {
+    if (isLogin) {
+      return (
+        <form onSubmit={handleLogin} className="space-y-4">
+          <h2 className="text-2xl font-bold text-gray-800">Log In</h2>
+          
+          <div>
+            <label htmlFor="login-email" className="block text-sm font-medium text-gray-700">Email Address</label>
+            <input type="email" id="login-email" name="email" className={`mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-[${secondary}] focus:border-[${secondary}]`} required />
+          </div>
+          
+          <div>
+            <label htmlFor="login-password" className="block text-sm font-medium text-gray-700">Password (Min {MIN_PASS_LENGTH} chars)</label>
+            <input type="password" id="login-password" name="password" minLength={MIN_PASS_LENGTH} className={`mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-[${secondary}] focus:border-[${secondary}]`} required />
+          </div>
+          
+          <button type="submit" className={`w-full py-2 rounded-md font-semibold transition-colors bg-[${primary}] text-white hover:bg-indigo-900`}>
+            Log In
+          </button>
+        </form>
+      );
+    } else {
+      return (
+        <form onSubmit={handleRegister} className="space-y-4">
+          <h2 className="text-2xl font-bold text-gray-800">Create Account</h2>
+          
+          <div>
+            <label htmlFor="register-name" className="block text-sm font-medium text-gray-700">Full Name</label>
+            <input type="text" id="register-name" name="name" className={`mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-[${secondary}] focus:border-[${secondary}]`} required />
+          </div>
+
+          <div>
+            <label htmlFor="register-email" className="block text-sm font-medium text-gray-700">Email Address</label>
+            <input type="email" id="register-email" name="email" className={`mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-[${secondary}] focus:border-[${secondary}]`} required />
+          </div>
+          
+          <div>
+            <label htmlFor="register-password" className="block text-sm font-medium text-gray-700">Password (Min {MIN_PASS_LENGTH} chars)</label>
+            <input type="password" id="register-password" name="password" minLength={MIN_PASS_LENGTH} className={`mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-[${secondary}] focus:border-[${secondary}]`} required />
+          </div>
+          
+          {/* Account Type Selection */}
+          <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Account Type</label>
+              <div className="flex space-x-6">
+                  <label className="inline-flex items-center">
+                      <input type="radio" name="user_type" value="profile" defaultChecked className={`form-radio text-[${primary}] focus:ring-[${secondary}]`} required />
+                      <span className="ml-2 text-gray-700">Tech Professional</span>
+                  </label>
+                  <label className="inline-flex items-center">
+                      <input type="radio" name="user_type" value="recruiter" className={`form-radio text-[${primary}] focus:ring-[${secondary}]`} />
+                      <span className="ml-2 text-gray-700">Recruiter</span>
+                  </label>
+              </div>
+              <p className="text-xs text-gray-500 mt-2">Verifier accounts are managed internally.</p>
+          </div>
+
+          <button type="submit" className={`w-full py-2 rounded-md font-semibold transition-colors bg-[${secondary}] text-[${textOnSecondary}] hover:bg-blue-300`}>
+            Register Account
+          </button>
+        </form>
+      );
+    }
+  };
+
 
   return (
     <div className={`w-full max-w-lg bg-[${neutralBg}] p-8 rounded-lg shadow-xl border border-gray-200`}>
@@ -176,65 +353,13 @@ const AuthView = ({ setView }) => {
         </button>
       </div>
 
-      <form onSubmit={(e) => handleAuth(e, isLogin ? 'login' : 'register')} className="space-y-4">
-        <h2 className="text-2xl font-bold text-gray-800">{isLogin ? 'Welcome Back' : 'Create Account'}</h2>
-        {!isLogin && (
-            <input type="hidden" name="user_type" value="professional" /> 
-        )}
-
-        {isLogin && (
-             <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Log In As</label>
-                <div className="flex space-x-4">
-                    <label className="inline-flex items-center">
-                        <input type="radio" name="login_type" value="professional" checked={userType === 'professional'} onChange={() => setUserType('professional')} className={`form-radio text-[${primary}] focus:ring-[${secondary}]`} />
-                        <span className="ml-2 text-gray-700">Tech Professional</span>
-                    </label>
-                    <label className="inline-flex items-center">
-                        <input type="radio" name="login_type" value="recruiter" checked={userType === 'recruiter'} onChange={() => setUserType('recruiter')} className={`form-radio text-[${primary}] focus:ring-[${secondary}]`} />
-                        <span className="ml-2 text-gray-700">Recruiter</span>
-                    </label>
-                     <label className="inline-flex items-center">
-                        <input type="radio" name="login_type" value="verifier" checked={userType === 'verifier'} onChange={() => setUserType('verifier')} className={`form-radio text-[${primary}] focus:ring-[${secondary}]`} />
-                        <span className="ml-2 text-gray-700">Verifier</span>
-                    </label>
-                </div>
-            </div>
-        )}
-        
-        <div>
-          <label htmlFor={`${isLogin ? 'login' : 'register'}-email`} className="block text-sm font-medium text-gray-700">Email Address</label>
-          <input type="email" id={`${isLogin ? 'login' : 'register'}-email`} name="email" className={`mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-[${secondary}] focus:border-[${secondary}]`} required />
-        </div>
-        
-        <div>
-          <label htmlFor={`${isLogin ? 'login' : 'register'}-password`} className="block text-sm font-medium text-gray-700">Password</label>
-          <input type="password" id={`${isLogin ? 'login' : 'register'}-password`} name="password" className={`mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-[${secondary}] focus:border-[${secondary}]`} required />
-        </div>
-        
-        {!isLogin && (
-             <div className="flex space-x-4">
-              <label className="inline-flex items-center">
-                <input type="radio" name="user_type" value="professional" defaultChecked className={`form-radio text-[${primary}] focus:ring-[${secondary}]`} />
-                <span className="ml-2 text-gray-700">Tech Professional (Default)</span>
-              </label>
-            </div>
-        )}
-
-        <button type="submit" className={`w-full py-2 rounded-md font-semibold transition-colors 
-            ${isLogin 
-                ? `bg-[${primary}] text-white hover:bg-indigo-900` 
-                : `bg-[${secondary}] text-[${textOnSecondary}] hover:bg-blue-300`}`}
-        >
-          {isLogin ? 'Log In' : 'Register Account'}
-        </button>
-      </form>
+      {renderAuthForm()}
     </div>
   );
 };
 
 // ====================================================================
-// 3. Add Claim Modal (unchanged)
+// 3. Add Claim Modal (Protected Routes will also need credentials: 'include')
 // ====================================================================
 
 const AddClaimModal = ({ isOpen, onClose, onClaimSubmitted }) => {
@@ -253,7 +378,8 @@ const AddClaimModal = ({ isOpen, onClose, onClaimSubmitted }) => {
         const title = formData.get('claim-title');
         
         try {
-            // Mock API call delay
+            // NOTE: This should be updated to a real API call later
+            // Any real API call here will also need credentials: 'include'
             await new Promise(resolve => setTimeout(resolve, 2000));
             
             const isMockSuccess = Math.random() > 0.1;
@@ -338,7 +464,7 @@ const AddClaimModal = ({ isOpen, onClose, onClaimSubmitted }) => {
 
 
 // ====================================================================
-// 4. Profile View (unchanged from Day 18)
+// 4. Profile View (unchanged)
 // ====================================================================
 
 const ProfileView = ({ claims, trustScore, newlyVerifiedId, onClaimSubmitted, onClaimAction, onAlertDismissed }) => {
@@ -356,6 +482,7 @@ const ProfileView = ({ claims, trustScore, newlyVerifiedId, onClaimSubmitted, on
   React.useEffect(() => {
     const fetchProfileData = () => {
       setLoading(true);
+      // NOTE: This fetch should eventually be a protected API call to fetch actual user profile data
       return new Promise(resolve => {
         setTimeout(() => {
           resolve(MOCK_PROFILE_DATA_BASE); 
@@ -523,6 +650,8 @@ const RecruiterView = () => {
         setIsLoading(true);
 
         try {
+            // NOTE: This mock delay/search should be replaced with a protected API call 
+            // that includes credentials: 'include'
             await new Promise(resolve => setTimeout(resolve, 1500)); 
 
             const query = searchQuery.toLowerCase();
@@ -800,91 +929,14 @@ const EnterpriseAPIView = () => {
     );
 };
 
-// ====================================================================
-// 8. NEW: Project Roadmap View (Day 20)
-// ====================================================================
-
-const RoadmapView = ({ setView }) => {
-    const { primary, secondary, success, neutralBg } = useTheme(); 
-
-    const handleLoginClick = (userType) => {
-        // Mock setting local storage to redirect after login
-        localStorage.setItem('techtust_user_type', userType);
-        localStorage.setItem('techtust_token', 'mock-jwt-token');
-        setView(userType);
-        alert(`Logged in as ${userType.charAt(0).toUpperCase() + userType.slice(1)}!`);
-    };
-
-    return (
-        <div className="w-full max-w-6xl">
-            <h1 className={`text-4xl font-extrabold text-[${primary}] mb-2`}>TechTrust Project Completion</h1>
-            <p className="text-xl text-gray-600 mb-10">All four core modules have been designed and mocked.</p>
-
-            <div className={`bg-[${neutralBg}] p-8 rounded-lg shadow-2xl border-t-8 border-[${secondary}]`}>
-                
-                <h2 className={`text-3xl font-bold text-gray-800 mb-6 flex items-center`}>
-                    Project Milestones (4/4 Complete) <span className={`ml-3 text-3xl text-[${success}]`}>✅</span>
-                </h2>
-
-                <div className="space-y-6">
-                    {PROJECT_MODULES.map(module => (
-                        <div key={module.id} className="p-4 rounded-lg bg-green-50 border-l-4 border-green-500 flex justify-between items-center">
-                            <div className="flex-1 min-w-0">
-                                <p className="text-xl font-semibold text-green-800">{module.name}</p>
-                                <p className="text-sm text-gray-600 mt-1">{module.description}</p>
-                            </div>
-                            <div className="text-right ml-4">
-                                <span className={`text-sm font-bold text-white px-3 py-1 rounded-full bg-[${success}]`}>
-                                    {module.status}
-                                </span>
-                                <p className="text-xs text-gray-500 mt-1">Completed: {module.date}</p>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-            
-            <h2 className={`text-2xl font-bold text-gray-800 mt-10 mb-5`}>Launch the Demo App</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <button
-                    onClick={() => handleLoginClick('profile')}
-                    className={`p-6 bg-[${primary}] text-white rounded-lg shadow-lg hover:bg-indigo-900 transition-transform transform hover:scale-[1.02]`}
-                >
-                    <p className="text-xl font-bold">Tech Professional (Jane Doe)</p>
-                    <p className="text-sm opacity-80 mt-1">View Profile, Claims & Score</p>
-                </button>
-                <button
-                    onClick={() => handleLoginClick('recruiter')}
-                    className={`p-6 bg-[${secondary}] text-[${primary}] rounded-lg shadow-lg hover:bg-blue-300 transition-transform transform hover:scale-[1.02]`}
-                >
-                    <p className="text-xl font-bold">Enterprise Recruiter</p>
-                    <p className="text-sm opacity-90 mt-1">Search Candidates & Manage API</p>
-                </button>
-                <button
-                    onClick={() => handleLoginClick('verifier')}
-                    className={`p-6 bg-yellow-500 text-white rounded-lg shadow-lg hover:bg-yellow-600 transition-transform transform hover:scale-[1.02]`}
-                >
-                    <p className="text-xl font-bold">M3 Verifier Console</p>
-                    <p className="text-sm opacity-90 mt-1">Review Pending Vetting Claims</p>
-                </button>
-            </div>
-            
-            <p className="text-center text-sm text-gray-500 mt-6">
-                Or, click "Sign In" in the header to access the full login/registration page.
-            </p>
-            
-        </div>
-    );
-};
-
 
 // ====================================================================
-// 9. App Component (The Main Router) - Final Update
+// 8. App Component (The Main Router) - Final Update
 // ====================================================================
 
 const App = () => {
-  // 🚨 Day 20: Changed initial view to 'roadmap' unless a token/user type exists
-  const [currentView, setCurrentView] = React.useState('roadmap'); 
+  // Set initial view to 'login'
+  const [currentView, setCurrentView] = React.useState('login'); 
   const [themeMode, setThemeMode] = React.useState('light'); 
   
   // Central State Management (Trust Score & Claims)
@@ -930,15 +982,19 @@ const App = () => {
   const activeTheme = themeMode === 'light' ? THEME_CONFIG : DARK_THEME_CONFIG;
   const { secondary } = activeTheme.colors;
 
+  // Check Local Storage on load
   React.useEffect(() => {
+    // We check local storage for routing, but the real session check should be a protected API call
     const userType = localStorage.getItem('techtust_user_type');
-    const token = localStorage.getItem('techtust_token');
     
-    // 🚨 Day 20: If logged in, go to user type view. Otherwise, show roadmap.
-    if (token && userType) {
+    // NOTE: In a real production app, before setting the view, you would make a protected
+    // route API call (e.g., /api/user/me) which verifies the cookie's JWT (credentials: 'include').
+    // If that call fails, you clear local storage and redirect to 'login'. For this demo, we assume 
+    // if the userType is in localStorage, they are logged in.
+    if (userType) {
       setCurrentView(userType); 
     } else {
-      setCurrentView('roadmap');
+      setCurrentView('login');
     }
   }, []);
 
@@ -947,9 +1003,6 @@ const App = () => {
 
   // Simple Router Logic
   switch (currentView) {
-    case 'roadmap':
-        content = <RoadmapView setView={setCurrentView} />;
-        break;
     case 'login':
       content = <AuthView setView={setCurrentView} />;
       break;
@@ -973,7 +1026,7 @@ const App = () => {
         content = <EnterpriseAPIView />;
         break;
     default:
-      content = <RoadmapView setView={setCurrentView} />;
+      content = <AuthView setView={setCurrentView} />;
   }
 
   return (
@@ -987,7 +1040,7 @@ const App = () => {
         />
         
         <main className={mainClass + " flex"}>
-          <div className={`w-full h-full flex ${currentView === 'login' || currentView === 'roadmap' ? 'items-center justify-center' : 'items-start justify-center'}`}>
+          <div className={`w-full h-full flex ${currentView === 'login' ? 'items-center justify-center' : 'items-start justify-center'}`}>
             {content}
           </div>
         </main>
@@ -1004,7 +1057,7 @@ const App = () => {
 };
 
 // ====================================================================
-// 10. REACT MOUNTING LOGIC (Browser Entry Point)
+// 9. REACT MOUNTING LOGIC (Browser Entry Point)
 // ====================================================================
 
 const rootElement = document.getElementById('root');
